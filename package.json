@@ -1,0 +1,25 @@
+{
+  "name": "js13k-githubschman",
+  "author": "githubschman",
+  "description": "Description will be here!",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KilledByAPixel/js13k-githubschman.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/githubschman/js13k-githubschman",
+  "scripts": {
+    "dev": "servez src --port 8080",
+    "zip": "node scripts/zip.js"
+  },
+  "devDependencies": {
+    "servez": "^2.3.0",
+    "uglify-js": "~3.17.4",
+    "advzip-bin": "^2.0.0",
+    "bestzip": "^2.2.1",
+    "ect-bin": "^1.4.1",
+    "google-closure-compiler": "^20230502.0.0",
+    "roadroller": "^2.1.0"
+  }
+}

@@ -1,0 +1,65 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Black Cat Detective Agency</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: #111
+        }
+
+        #c {
+            width: 100vw;
+            height: 100vh;
+            display: block
+        }
+
+        #take-pic {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+        }
+
+        #album {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: 3px solid #fff;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            background: #fff;
+        }
+        .screenshot {
+            max-width: 100px;
+            object-fit: cover;
+            margin: 5px;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <div class="ui">
+        <button id="take-pic">📸 Snap</button>
+        <div id="album"></div>
+    </div>
+    
+    <script>
+       // WebGL linting! This is a hack to make sure it doesn't get into the final zip!
+        if (location.hostname === 'localhost') {
+            const s = document.createElement('script');
+            s.src = 'https://greggman.github.io/webgl-lint/webgl-lint.js';
+            document.head.appendChild(s);
+        }
+    </script>
+    <!-- TODO: inlining these scripts here will make this faster! that is a currently unused step in zip.js -->
+    <script src="./utils.js"></script>
+    <script src="./m4.js"></script>
+    <script src="./game.js"></script>
+</body>
