@@ -1,3 +1,34 @@
+/*
+ * Copyright 2021 GFXFundamentals.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of GFXFundamentals. nor the names of his
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 (function (root, factory) {  // eslint-disable-line
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
@@ -523,105 +554,6 @@
     return attribSetters;
   }
 
-  /**
-   * Sets attributes and binds buffers (deprecated... use {@link module:webgl-utils.setBuffersAndAttributes})
-   *
-   * Example:
-   *
-   *     let program = createProgramFromScripts(
-   *         gl, ["some-vs", "some-fs"]);
-   *
-   *     let attribSetters = createAttributeSetters(program);
-   *
-   *     let positionBuffer = gl.createBuffer();
-   *     let texcoordBuffer = gl.createBuffer();
-   *
-   *     let attribs = {
-   *       a_position: {buffer: positionBuffer, numComponents: 3},
-   *       a_texcoord: {buffer: texcoordBuffer, numComponents: 2},
-   *     };
-   *
-   *     gl.useProgram(program);
-   *
-   * This will automatically bind the buffers AND set the
-   * attributes.
-   *
-   *     setAttributes(attribSetters, attribs);
-   *
-   * Properties of attribs. For each attrib you can add
-   * properties:
-   *
-   * *   type: the type of data in the buffer. Default = gl.FLOAT
-   * *   normalize: whether or not to normalize the data. Default = false
-   * *   stride: the stride. Default = 0
-   * *   offset: offset into the buffer. Default = 0
-   *
-   * For example if you had 3 value float positions, 2 value
-   * float texcoord and 4 value uint8 colors you'd setup your
-   * attribs like this
-   *
-   *     let attribs = {
-   *       a_position: {buffer: positionBuffer, numComponents: 3},
-   *       a_texcoord: {buffer: texcoordBuffer, numComponents: 2},
-   *       a_color: {
-   *         buffer: colorBuffer,
-   *         numComponents: 4,
-   *         type: gl.UNSIGNED_BYTE,
-   *         normalize: true,
-   *       },
-   *     };
-   *
-   * @param {Object.<string, function>|model:webgl-utils.ProgramInfo} setters Attribute setters as returned from createAttributeSetters or a ProgramInfo as returned {@link module:webgl-utils.createProgramInfo}
-   * @param {Object.<string, module:webgl-utils.AttribInfo>} attribs AttribInfos mapped by attribute name.
-   * @memberOf module:webgl-utils
-   * @deprecated use {@link module:webgl-utils.setBuffersAndAttributes}
-   */
-  function setAttributes(setters, attribs) {
-    setters = setters.attribSetters || setters;
-    Object.keys(attribs).forEach(function (name) {
-      const setter = setters[name];
-      if (setter) {
-        setter(attribs[name]);
-      }
-    });
-  }
-
-  /**
-   * Creates a vertex array object and then sets the attributes
-   * on it
-   *
-   * @param {WebGLRenderingContext} gl The WebGLRenderingContext
-   *        to use.
-   * @param {Object.<string, function>} setters Attribute setters as returned from createAttributeSetters
-   * @param {Object.<string, module:webgl-utils.AttribInfo>} attribs AttribInfos mapped by attribute name.
-   * @param {WebGLBuffer} [indices] an optional ELEMENT_ARRAY_BUFFER of indices
-   */
-  function createVAOAndSetAttributes(gl, setters, attribs, indices) {
-    const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    setAttributes(setters, attribs);
-    if (indices) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-    }
-    // We unbind this because otherwise any change to ELEMENT_ARRAY_BUFFER
-    // like when creating buffers for other stuff will mess up this VAO's binding
-    gl.bindVertexArray(null);
-    return vao;
-  }
-
-  /**
-   * Creates a vertex array object and then sets the attributes
-   * on it
-   *
-   * @param {WebGLRenderingContext} gl The WebGLRenderingContext
-   *        to use.
-   * @param {Object.<string, function>| module:webgl-utils.ProgramInfo} programInfo as returned from createProgramInfo or Attribute setters as returned from createAttributeSetters
-   * @param {module:webgl-utils:BufferInfo} bufferInfo BufferInfo as returned from createBufferInfoFromArrays etc...
-   * @param {WebGLBuffer} [indices] an optional ELEMENT_ARRAY_BUFFER of indices
-   */
-  function createVAOFromBufferInfo(gl, programInfo, bufferInfo) {
-    return createVAOAndSetAttributes(gl, programInfo.attribSetters || programInfo, bufferInfo.attribs, bufferInfo.indices);
-  }
 
   /**
    * @typedef {Object} ProgramInfo
@@ -1283,18 +1215,6 @@
     });
   }
 
-  function glEnumToString(gl, v) {
-    const results = [];
-    for (const key in gl) {
-      if (gl[key] === v) {
-        results.push(key);
-      }
-    }
-    return results.length
-      ? results.join(' | ')
-      : `0x${v.toString(16)}`;
-  }
-
   const isIE = /*@cc_on!@*/false || !!document.documentMode;
   // Edge 20+
   const isEdge = !isIE && !!window.StyleMedia;
@@ -1315,7 +1235,9 @@
     }(HTMLCanvasElement.prototype.getContext);
   }
 
+  // TODO: only return the things we need
   return {
+    createAugmentedTypedArray: createAugmentedTypedArray,
     createAttribsFromArrays: createAttribsFromArrays,
     createBuffersFromArrays: createBuffersFromArrays,
     createBufferInfoFromArrays: createBufferInfoFromArrays,
@@ -1329,7 +1251,6 @@
     createVAOFromBufferInfo: createVAOFromBufferInfo,
     drawBufferInfo: drawBufferInfo,
     drawObjectList: drawObjectList,
-    glEnumToString: glEnumToString,
     getExtensionWithKnownPrefixes: getExtensionWithKnownPrefixes,
     resizeCanvasToDisplaySize: resizeCanvasToDisplaySize,
     setAttributes: setAttributes,
