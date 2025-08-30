@@ -21,6 +21,7 @@
   const lightPurple = "rgba(179, 188, 243, 1)";
   const darkPurple = "rgba(116, 109, 195, 1)";
 
+
   function drawBackground() {
     // using the size of the canvas, we can figure out how many boxes to draw
     const boxSize = 25;

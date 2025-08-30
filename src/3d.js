@@ -94,6 +94,8 @@
     document.body.style.cursor = locked ? 'none' : 'auto';
   });
 
+  let yaw = 0; // < >
+  let pitch = 0; // ^ v
   const sensitivity = 0.0025; // 0.002 – 0.004?
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) {
@@ -111,22 +113,15 @@
   let shouldCaptureImage = false;
   let cameraMode = false;
 
-  // // add an event listener to the button and the 'c'/space key to tell the render loop to capture!
-  // cameraButton.onclick = () => {
-  //   shouldCaptureImage = true;
-  // };
-
-let zoomAmount = 0;
+  let zoomAmount = 0;
   addEventListener('keydown', e => {
-    if (e.key === 'c' || e.key === 'C') {
-      cameraMode = !cameraMode;
-      if (cameraMode) {
+    if (e.code === 'Space') {
+      if (!cameraMode) {
+        cameraMode = true;
         document.getElementById('camera-ui').classList.remove('hidden');
-      } else {
-        document.getElementById('camera-ui').classList.add('hidden');
+      } else if (cameraMode && !shouldCaptureImage) {
+        shouldCaptureImage = true;
       }
-    } else if (e.code === 'Space' && cameraMode) {
-      shouldCaptureImage = true;
     } else if (e.key === 'z') {
       if (!cameraMode) return;
       // zoom in
@@ -144,38 +139,6 @@ let zoomAmount = 0;
   /* Setup WebGL program */
   const programInfo = webglUtils.createProgramInfo(gl, [vertexShader, fragmentShader]);
   gl.useProgram(programInfo.program);
-
-
-  /* WASD and arrow input! */
-  let yaw = 0; // < >
-  let pitch = 0; // ^ v
-
-  function lerp(start, end, amount) {
-    return start + (end - start) * amount
-  }
-
-  // make this "camera-mode-only"
-  addEventListener('keydown', e => {
-    let inputYaw = yaw;
-    let inputPitch = pitch;
-    if (e.key === 'a' || e.key === 'ArrowLeft') {
-      inputYaw += 0.12; // left
-    } else if (e.key === 'd' || e.key === 'ArrowRight') {
-      inputYaw -= 0.12; // right
-    } else if (e.key === 'w' || e.key === 'ArrowUp') {
-      inputPitch += 0.12; // up
-    } else if (e.key === 's' || e.key === 'ArrowDown') {
-      inputPitch -= 0.12; // down
-    }
-    // clamp the pitch to prevent flipping around the y-axis
-    const pitchLimit = Math.PI / 2 - 0.1; // 1.4707963267948965 radians to ~85 degrees
-    pitch = Math.max(-pitchLimit, Math.min(inputPitch, pitchLimit));
-    pitch = lerp(pitch, inputPitch, 0.1);
-    yaw = lerp(yaw, inputYaw, 0.1);
-
-    // will this conflict with pointer lock?
-    e.preventDefault();
-  });
 
 
   /* this is the frustum test */
@@ -213,7 +176,7 @@ let zoomAmount = 0;
   const baseColor = rand(240);
   for (let ii = 0; ii < numObjects; ++ii) {
 
-    // // first push the golden object that we wanna capture!
+    // first push the golden object that we wanna capture!
     if (ii === 0) {
       objects.push({
         isCulprit: true,
@@ -370,7 +333,6 @@ let zoomAmount = 0;
   }
 
   function drawGround(gl, view, projection) {
-    ;
     const s = 40;
     const positions = new Float32Array([
       -s, 0, -s,
@@ -403,11 +365,56 @@ let zoomAmount = 0;
       u_lightWorldPos: [-50, 30, 100],
       u_viewInverse: view,
       u_lightColor: [1, 1, 1, 1],
-      u_color: [99 / 255, 205 / 255, 134 / 255, 1], // green
+      u_color: objectModule.colors.slime
     });
 
     webglUtils.drawBufferInfo(gl, groundBuffer, gl.TRIANGLE_STRIP);
   }
+
+  function generateGrassBlades() {
+    const blades = [];
+    for (let i = 0; i < 100; i++) {
+      // i thought the range should be -40 to 40 to cover the ground, but that wasn't big enough?
+      const tX = Math.random() * 20 - 10;
+      const tZ = Math.random() * 20 - 10;
+      const tY = Math.random() * 0.15 + 0.1;
+      blades.push({ tX, tZ, tY });
+    }
+    return blades;
+  }
+
+  // hardcoding trees
+  const trees = [
+    {
+      "tX": -33,
+      "tZ": 2
+    },
+    {
+      "tX": -14,
+      "tZ": 37
+    },
+    {
+      "tX": 29,
+      "tZ": -10
+    },
+    {
+      "tX": -18,
+      "tZ": -25
+    },
+    {
+      "tX": 37,
+      "tZ": -31
+    },
+    {
+      "tX": -25,
+      "tZ": 8
+    },
+    {
+      "tX": -1,
+      "tZ": -29
+    }
+  ]
+  const blades = generateGrassBlades();
 
   /* the render loop */
   function render(time = 0) {
@@ -429,7 +436,6 @@ let zoomAmount = 0;
 
     // if in camera mode zoom in and out by changing the FOV
     if (cameraMode) {
-      console.log(zoomAmount)
       if (zoomAmount === 0) {
         // start slightly zoomed in
         zoomAmount = -0.1;
@@ -460,7 +466,20 @@ let zoomAmount = 0;
     drawGround(gl, view, projection);
 
     // gonna test by creating ONE dog
-    dog.drawDog(gl, programInfo, projection, view, time);
+    objectModule.drawDog(gl, programInfo, projection, view, time);
+
+    // draw grass
+    blades.forEach(blade => {
+      objectModule.drawObject({ gl, projection, programInfo, view, world: null, tX: blade.tX, tY: 0, tZ: blade.tZ, sX: 0.01, sY: 0.3, sZ: 0.01, color: objectModule.colors.slime });
+    });
+
+    // draw trees
+    trees.forEach(tree => {
+      // draw trunk
+      objectModule.drawObject({ gl, projection, programInfo, view, world: null, tX: tree.tX, tY: 0.5, tZ: tree.tZ, sX: 1, sY: 10, sZ: 1, color: objectModule.colors.brown });
+      // draw leaves
+      objectModule.drawObject({ gl, projection, programInfo, view, world: null, tX: tree.tX, tY: 7, tZ: tree.tZ, sX: 6, sY: 3, sZ: 6, color: objectModule.colors.slime });
+    });
 
     // this will be true if the button is pressed...
     if (shouldCaptureImage) {

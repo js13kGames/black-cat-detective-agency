@@ -10,12 +10,12 @@
         define([], factory);
     } else {
         // Browser globals
-        root.dog = factory();
+        root.objectModule = factory();
     }
 }(this, function () {
     "use strict";
 
-    const dogNames = ['Sriracha', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Therm', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivvy', 'Matt']
+    const dogNames = ['Sriracha', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew']
     // dog types: german shepherd, mutt, golden retriever, westie, pug
     // bad dog activities: eating garbage, running too fast, barking at nothing, silly color, chasing their own tail
 
@@ -124,90 +124,70 @@
     ];
 
 
-    function drawCube(gl) {
-        const positions = [
-            // Front face
-            -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+    // the cube buffer we will use to create everything!
+    const canvas = document.getElementById('c');
+    const gl = canvas.getContext('webgl');
+    const positions = [
+        // Front face
+        -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
 
-            // Back face
-            -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5,
+        // Back face
+        -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5,
 
-            // Top face
-            -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
+        // Top face
+        -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
 
-            // Bottom face
-            -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5,
+        // Bottom face
+        -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5,
 
-            // Right face
-            0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5,
+        // Right face
+        0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5,
 
-            // Left face
-            -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
-        ];
+        // Left face
+        -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
+    ];
+    const normal = [
+        // Front face
+        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
 
-        const normal = [
-            // Front face
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+        // Back face
+        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
 
-            // Back face
-            0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
+        // Top face
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
 
-            // Top face
-            0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+        // Bottom face
+        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
 
-            // Bottom face
-            0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+        // Right face
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
 
-            // Right face
-            1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+        // Left face
+        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
 
-            // Left face
-            -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+    ]
+    const indices = [
+        // front
+        0, 1, 2, 0, 2, 3,
+        // back
+        4, 5, 6, 4, 6, 7,
+        // top
+        8, 9, 10, 8, 10, 11,
+        // bottom
+        12, 13, 14, 12, 14, 15,
+        // right
+        16, 17, 18, 16, 18, 19,
+        // left
+        20, 21, 22, 20, 22, 23,
+    ];
+    const cube = webglUtils.createBufferInfoFromArrays(gl, {
+        position: { numComponents: 3, data: positions },
+        normal: { numComponents: 3, data: normal },
+        indices: { numComponents: 3, data: indices },
+    });
+    // end of cube code
 
-        ]
-
-        const indices = [
-            // front
-            0, 1, 2, 0, 2, 3,
-            // back
-            4, 5, 6, 4, 6, 7,
-            // top
-            8, 9, 10, 8, 10, 11,
-            // bottom
-            12, 13, 14, 12, 14, 15,
-            // right
-            16, 17, 18, 16, 18, 19,
-            // left
-            20, 21, 22, 20, 22, 23,
-        ];
-
-
-        // Setup all the needed buffers and attributes.
-        return webglUtils.createBufferInfoFromArrays(gl, {
-            position: { numComponents: 3, data: positions },
-            normal: { numComponents: 3, data: normal },
-            indices: { numComponents: 3, data: indices },
-        });
-    }
-
-    // // note: this is in radians!!!
-    // function wrapAngle(angle) {
-    //     // while (angle >= 360) {
-    //     //     angle -= 360;
-    //     // }
-    //     // while (angle < 0) {
-    //     //     angle += 360;
-    //     // }
-    //     // return angle;
-    //     while (angle > Math.PI) {
-    //         angle -= 2 * Math.PI;
-    //     }
-    //     while (angle < -Math.PI) {
-    //         angle += 2 * Math.PI;
-    //     }
-    //     return angle;
-    // }
-
+    // the base dog state
     const dogState = {
         // keeping track of time spent walking used to 
         timeWalking: 0,
@@ -223,25 +203,6 @@
         bounds: { x: [-8, 8], z: [-18, -2] },
     };
 
-    /*
-    // spinning dog
-        const dogState = {
-        // keeping track of time spent walking
-        timeWalking: 0,
-        // original position in world space
-        pos: [0, 0, -16],
-        // direction facing
-        direction: 0,
-        // size of dog
-        scale: 0.5,
-        // how fast per second
-        speed:  5, // 1.1,
-        // how far they can go (randomized to be a little far away from camera)
-        bounds: { x: [-16, 6], z: [-8, 2] },
-    };
-
-    */
-
     // this is for random dogs wander. Bad dogs will have own custom animations!
     function updatePosition(dogState, time) {
         const timeSinceStep = Math.max(0.001, time * 0.001 - dogState.timeWalking);
@@ -255,31 +216,12 @@
         // if the dog has hit the bounds, then turn them around and make them go in another direction!
         if (dogState.pos[0] < dogState.bounds.x[0] || dogState.pos[0] > dogState.bounds.x[1] ||
             dogState.pos[2] < dogState.bounds.z[0] || dogState.pos[2] > dogState.bounds.z[1]) {
-            // // get the angle of from the z position to the x position
-            // const dYaw = Math.atan2(dogState.pos[2], dogState.pos[0]);
-            // dogState.direction = wrapAngle(dogState.direction + dYaw);
             dogState.direction += Math.PI; // just move them 180 degrees in radians
         }
-        // slowly turn the dog until they're facing their target direction
-        // if (dogState.targetDirection !== null) {
-        //     const diff = wrapAngle(dogState.targetDirection - dogState.direction);
-        //     if (Math.abs(dogState.targetDirection - dogState.direction) > 0.01) {
-        //         let updatedDirection = dogState.direction + (diff > 0 ? 1 : -1) * (dogState.speed / 100);
-        //         dogState.direction = wrapAngle(updatedDirection);
-        //     } else {
-        //         dogState.direction = dogState.targetDirection;
-        //         dogState.targetDirection = null;
-        //     }
-        // }
     }
 
     function drawDog(gl, programInfo, projection, view, time) {
         updatePosition(dogState, time);
-
-        // Create the base cube to work with. 
-        // Instead of creating different sized cubes for each part, we can just use one cube and scale it!
-        const cube = drawCube(gl);
-
         const world = dogParts.map(() => m4.identity());
         const idx = Object.fromEntries(dogParts.map((p, i) => [p.name, i]));
 
@@ -306,49 +248,52 @@
             world[i] = partMatrix;
         }
 
-        // this is what's set in 3d.js
-        const lightingUniforms = {
-            u_lightWorldPos: [-50, 30, 100],
-            u_viewInverse: m4.identity(),
-            u_lightColor: [1, 1, 1, 1],
-        };
-
         for (let i = 0; i < dogParts.length; i++) {
             const part = dogParts[i];
-
-            // scale the shape
-            const worldMatrix = m4.scale(
-                m4.copy(world[i]),
-                // x y z scale
-                part.scale[0], part.scale[1], part.scale[2]
-            );
-
-            // Compute the mvp matrix
-            const viewWorld = m4.multiply(view, worldMatrix);
-            const mvp = m4.multiply(projection, viewWorld);
-
-            // Set all required uniforms (this is for lighting)
-            const u_worldInverseTranspose = m4.identity();
-            // transpose for "normal" matrix
-            m4.transpose(m4.inverse(worldMatrix), u_worldInverseTranspose);
-            const uniformSetters = webglUtils.createUniformSetters(gl, programInfo.program);
-            webglUtils.setBuffersAndAttributes(gl, programInfo, cube);
-            webglUtils.setUniforms(uniformSetters, {
-                u_mvp: mvp,
-                u_color: part.color || [0.8, 0.6, 0.3, 1.0],
-                u_world: worldMatrix,
-                u_worldInverseTranspose: u_worldInverseTranspose,
-                u_lightWorldPos: lightingUniforms.u_lightWorldPos,
-                u_viewInverse: view, // use camera view matrix as inverse
-                u_lightColor: lightingUniforms.u_lightColor,
-            });
-            webglUtils.drawBufferInfo(gl, cube);
+            drawObject({ gl, projection, programInfo, view, world: world[i], tX: part.offset[0], tY: part.offset[1], tZ: part.offset[2], sX: part.scale[0], sY: part.scale[1], sZ: part.scale[2], color: part.color || [0.8, 0.6, 0.3, 1.0] });
         }
-        // TODO: return all dog mvps
     }
 
+    function drawObject({gl, projection, programInfo, view, world, tX, tY, tZ, sX, sY, sZ, color}) {
+        webglUtils.setBuffersAndAttributes(gl, programInfo, cube);
+
+        // this is for stationary objects with no movement logic!
+        if (!world) {
+            world = m4.identity();
+            // translate before scaling
+            world = m4.translate(world, tX, tY, tZ);
+        }
+        // scale object
+        world = m4.scale(world, sX, sY, sZ);
+
+        const worldInverseTranspose = m4.transpose(m4.inverse(world));
+        // this is the matrix that is returned by this function
+        const mvp = m4.multiply(projection, m4.multiply(view, world));
+        webglUtils.setUniforms(programInfo, {
+            u_mvp: mvp,
+            u_world: world,
+            u_worldInverseTranspose: worldInverseTranspose,
+            u_lightWorldPos: [-50, 30, 100],
+            u_viewInverse: view,
+            u_lightColor: [1, 1, 1, 1],
+            u_color: color,
+        });
+        webglUtils.drawBufferInfo(gl, cube);
+        return mvp;
+    }
+
+    const colors = {
+        'slime': [99 / 255, 205 / 255, 134 / 255, 1],
+        'brown': [139 / 255, 69 / 255, 19 / 255, 1],
+        'purple': [128 / 255, 0, 128 / 255, 1],
+    }
+
+    // TODO: create a single drawObject function
     return {
         drawDog: drawDog,
+        drawObject: drawObject,
+        cube: cube,
+        colors: colors,
     };
 
 }));
