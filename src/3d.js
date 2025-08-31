@@ -124,8 +124,8 @@
       }
     } else if (e.key === 'z') {
       if (!cameraMode) return;
-      // zoom in
-      zoomAmount -= 0.1;
+      // clamp zoomAmount
+      zoomAmount = Math.max(-1, zoomAmount - 0.1);
     } else if (e.key === 'x') {
       if (!cameraMode) return;
       // clamp at starting point
@@ -143,193 +143,29 @@
 
   /* this is the frustum test */
   function isObjectInCamera(mvps, centerOfObject) {
-    // TODO: make sure there is nothing in the way either....?
-    const [mvp] = mvps; // we only care about the first object for now TESTING!
-    // multiplies the matrix to get the clip space coordinates
-    const [x, y, z] = m4.transformPoint(mvp, centerOfObject);
-    const xPositionInBounds = x >= -1 && x <= 1;
-    const yPositionInBounds = y >= -1 && y <= 1;
-    const zPositionInBounds = z >= 0 && z <= 1;
-    // check the clip space coords to see if they are within the frustum
-    return xPositionInBounds && yPositionInBounds && zPositionInBounds;
-  }
+    // check which dog is closest in clip space (z-axis)
+    let capturedDog = null;
+    let capturedDistance = 0;
+    for (let culprit of mvps) {
+      // check if the culprit is in the camera frustum
+      // multiplies the matrix to get the clip space coordinates
+      const [x, y, z] = m4.transformPoint(culprit.mvp, centerOfObject);
+      const xPositionInBounds = x >= -1 && x <= 1;
+      const yPositionInBounds = y >= -1 && y <= 1;
+      const zPositionInBounds = z >= 0 && z <= 1;
 
-
-  // TODO: move this to own file
-  // see example code: https://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-  function rand(min, max) {
-    if (max === undefined) {
-      max = min;
-      min = 0;
-    }
-    return min + Math.random() * (max - min);
-  }
-
-  const uniformsThatAreComputedForEachObject = {
-    u_worldViewProjection: m4.identity(),
-    u_world: m4.identity(),
-    u_worldInverseTranspose: m4.identity(),
-  };
-
-  const objects = [];
-  const numObjects = 20;
-  const baseColor = rand(240);
-  for (let ii = 0; ii < numObjects; ++ii) {
-
-    // first push the golden object that we wanna capture!
-    if (ii === 0) {
-      objects.push({
-        isCulprit: true,
-        radius: 100,
-        xRotation: 0,
-        yRotation: 0,
-        materialUniforms: {
-          u_colorMult: [1, 0.8, 0.2, 1], // golden color
-          u_specular: [1, 1, 1, 1],
-          u_shininess: 50,
-          u_specularFactor: 0.5,
-        },
-      });
-      // push the rest of the objects
-    } else {
-
-      const gray = [218 / 255, 215 / 255, 215 / 255, 1];
-      const clawGray = [201 / 255, 191 / 255, 191 / 255, 1];
-      let color = ii % 2 === 0 ? gray : clawGray;
-      objects.push({
-        isCulprit: true,
-        radius: rand(50, 150),
-        xRotation: rand(Math.PI * 2),
-        yRotation: rand(Math.PI),
-        materialUniforms: {
-          u_colorMult: color,
-          u_specular: [1, 1, 1, 1],
-          u_shininess: rand(10, 100),
-          u_specularFactor: rand(0.2, 1),
-        },
-      });
-    }
-  }
-
-
-  // Cube geometry: 8 vertices, 6 faces (12 triangles)
-
-  // Cube geometry: scaled up to [-5, 5] for each axis
-  const positions = [
-    // Front face
-    -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
-
-    // Back face
-    -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
-
-    // Top face
-    -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
-
-    // Bottom face
-    -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
-
-    // Right face
-    1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
-
-    // Left face
-    -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
-  ];
-
-  const texcoord = [
-    0, 0, 1, 0, 1, 1, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 1,
-    0, 0, 1, 0, 1, 1, 0, 1
-  ];
-
-  const normal = [
-    // Front
-    0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-    // Back
-    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
-    // Top
-    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-    // Bottom
-    0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-    // Right
-    1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-    // Left
-    -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0
-  ];
-
-  const indices = [
-    0, 1, 2, 0, 2, 3,    // front
-    4, 5, 6, 4, 6, 7,    // back
-    8, 9, 10, 8, 10, 11,   // top
-    12, 13, 14, 12, 14, 15,   // bottom
-    16, 17, 18, 16, 18, 19,   // right
-    20, 21, 22, 20, 22, 23,   // left
-  ];
-
-  const objectBuffer = webglUtils.createBufferInfoFromArrays(gl, {
-    position: { numComponents: 3, data: positions },
-    texcoord: { numComponents: 2, data: texcoord },
-    normal: { numComponents: 3, data: normal },
-    indices: { numComponents: 3, data: indices },
-  });
-
-  const uniformSetters = webglUtils.createUniformSetters(gl, programInfo.program);
-
-  function fundamentalExample(object, time, projection, view) {
-    // Compute a position for this object based on the time.
-    let worldMatrix = m4.xRotation(object.xRotation * time);
-    worldMatrix = m4.yRotate(worldMatrix, object.yRotation * time);
-    worldMatrix = m4.translate(worldMatrix, 0, 0, object.radius);
-    uniformsThatAreComputedForEachObject.u_world = worldMatrix;
-
-    // Setup all the needed buffers and attributes.
-    webglUtils.setBuffersAndAttributes(gl, programInfo, objectBuffer);
-
-    // so, unlike in the webgl fundamentals example, we want to move the camera around
-    // so we need to compute the model-view-projection matrix!
-    let viewWorld = m4.multiply(view, worldMatrix);
-    // mvp is a 16 point matrix (don't forget about homogeneous coordinates!)
-    let mvp = m4.multiply(projection, viewWorld);
-    uniformsThatAreComputedForEachObject.u_worldViewProjection = mvp;
-
-    // Multiply the matrices. (this is for lighting)
-    m4.transpose(m4.inverse(worldMatrix), uniformsThatAreComputedForEachObject.u_worldInverseTranspose);
-
-    // Set the uniforms that are specific to the this object.
-    webglUtils.setUniforms(programInfo, {
-      u_mvp: uniformsThatAreComputedForEachObject.u_worldViewProjection,
-      u_color: object.materialUniforms.u_colorMult
-    });
-
-    // Set the uniforms we just computed
-    webglUtils.setUniforms(uniformSetters, uniformsThatAreComputedForEachObject);
-
-    // Set the uniforms that are specific to the this object.
-    webglUtils.setUniforms(uniformSetters, object.materialUniforms);
-
-    // Draw the geometry.
-    gl.drawElements(gl.TRIANGLES, objectBuffer.numElements, gl.UNSIGNED_SHORT, 0);
-    return mvp
-  }
-
-
-  // NOTE: I was using the code in here: https://webglfundamentals.org/webgl/lessons/webgl-less-code-more-fun.html
-  // to emulate the random movement of the objects for the prototype! But I replaced the confetti with cubes from this tutorial: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
-  function createObjects(time, projection, view) {
-    // TODO: when creating objects, return important ones that we will need to do the frustum check on
-    // TODO: possibly use drawObjectList?
-    return objects.map(function (object) {
-
-      const mvp = fundamentalExample(object, time, projection, view);
-
-      if (object.isCulprit) {
-        return mvp; // return the model-view-projection matrix for frustum culling
-      } else {
-        return null
+      let inView = xPositionInBounds && yPositionInBounds && zPositionInBounds;
+      if (inView) {
+        if (!capturedDistance || z < capturedDistance) {
+          capturedDog = culprit;
+          capturedDistance = z;
+        }
       }
-    }).filter(mvp => mvp !== null); // filter out the non-culprit objects (we don't need to return them)
+    }
+    if (capturedDog) {
+      console.log('caught', capturedDog.breedName);
+    }
+    return capturedDog;
   }
 
   function drawGround(gl, view, projection) {
@@ -373,10 +209,10 @@
 
   function generateGrassBlades() {
     const blades = [];
-    for (let i = 0; i < 100; i++) {
-      // i thought the range should be -40 to 40 to cover the ground, but that wasn't big enough?
-      const tX = Math.random() * 20 - 10;
-      const tZ = Math.random() * 20 - 10;
+    for (let i = 0; i < 1000; i++) {
+      // -40 to 40 should cover the ground
+      const tX = Math.random() * 40 - 20;
+      const tZ = Math.random() * 40 - 20;
       const tY = Math.random() * 0.15 + 0.1;
       blades.push({ tX, tZ, tY });
     }
@@ -412,7 +248,11 @@
     {
       "tX": -1,
       "tZ": -29
-    }
+    },
+    {
+      "tX": 5,
+      "tZ": 20
+    },
   ]
   const blades = generateGrassBlades();
 
@@ -452,21 +292,14 @@
     const farPlane = 100; // the farthest distance we can see
     const projection = m4.perspective(fieldOfViewInRadians, viewportAspect, nearPlane, farPlane);
 
-    // this fixes an error that pops up sometimes in the linter?
-    const viewInverse = m4.inverse(view);
-    webglUtils.setUniforms(programInfo, {
-      u_lightWorldPos: [-50, 30, 100],
-      u_lightColor: [1, 1, 1, 1],
-      u_viewInverse: viewInverse,
-    });
-
-    // okay, now that we got all that, we can draw our objects!
-    const culprits = createObjects(time, projection, view); // createDogs
-
     drawGround(gl, view, projection);
 
-    // gonna test by creating ONE dog
-    objectModule.drawDog(gl, programInfo, projection, view, time);
+    // make the dogs!
+    const culprits = [];
+    objectModule.dogs.forEach(dog => {
+      let dogMvp = objectModule.drawDog(gl, programInfo, projection, view, time, dog);
+      culprits.push({mvp: dogMvp, ...dog});
+    });
 
     // draw grass
     blades.forEach(blade => {
@@ -486,19 +319,13 @@
       // reset the flag
       shouldCaptureImage = false;
 
-      // TODO: validate place within frustum for each subject using its center (model translation)
+      // Validate place within frustum for each subject using its center (model translation)
       const centerOfObject = [0, 0, 0]; // center of the object
       const isCaptured = isObjectInCamera(culprits, centerOfObject);
+    
       albumElement.textContent = isCaptured ? '✅ Got em!' : '❌ Missed! Try again?';
 
-      // if (isCaptured) {
-      // TODO: update UI elements when taking pic!
-
       // gl.finish() will block javascript execution until all webgl commands are finished by the gpu.
-      // ensuring the canvas is fully rendered before we take a screenshot
-      // see: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/finish
-      // according to the fundamentals docs, it is the same as gl.flush() except it ALSO waits for the GPU to finish
-      // hence why we use it here for the screenshot!
       gl.finish();
 
       // https://webglfundamentals.org/webgl/lessons/webgl-tips.html#screenshot
@@ -510,7 +337,6 @@
         albumElement.appendChild(document.createTextNode(' '));
         albumElement.appendChild(screenshot);
       });
-      // }
 
       // get out of camera mode
       cameraMode = false;

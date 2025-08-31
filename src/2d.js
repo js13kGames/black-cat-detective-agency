@@ -163,6 +163,7 @@
       ctx.fillStyle = 'white';
       ctx.strokeStyle = 'white';
       ctx.beginPath();
+      // TODO: this should prob not be round....
       ctx.roundRect(x, y, width, height, radii);
       ctx.fill();
       ctx.stroke();

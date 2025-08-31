@@ -15,7 +15,7 @@
 }(this, function () {
     "use strict";
 
-    const dogNames = ['Sriracha', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew']
+    const dogNames = ['Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew']
     // dog types: german shepherd, mutt, golden retriever, westie, pug
     // bad dog activities: eating garbage, running too fast, barking at nothing, silly color, chasing their own tail
 
@@ -23,103 +23,99 @@
     m4 = m4 || this.m4 || math3d;
 
 
-    // randomize for tiny dogs
-    const scale = .95;
     const dogParts = [
         {
             name: 'torso',
             parent: null,
-            // x, y, z movement
-            offset: [0 * scale, 1 * scale, 0 * scale],
-            // x, y, z size
-            scale: [1.8 * scale, 1.2 * scale, 3 * scale],
-            anim: (t, M) => M
+            offset: [0, 1, 0],
+            scale: [1.8, 1.2, 3],
         },
 
         // Head block
         {
-            name: 'head', parent: 'torso', 
-            offset: [0 * scale, 0.9 * scale, 1.7 * scale], 
-            scale: [1.0 * scale, 1.0 * scale, 1.0 * scale],
-            anim: (t, M) => {
-                M = m4.translate(M, 0, 0.05 * Math.sin(t * 6), 0); // tiny bob
-                return m4.xRotate(M, 0.05 * Math.sin(t * 2));
+            name: 'head',
+            parent: 'torso',
+            offset: [0, 0.9, 1.7],
+            scale: [1.0, 1.0, 1.0],
+            anim: (time, part) => {
+                part = m4.translate(part, 0, 0.05 * Math.sin(time * 6), 0);
+                return m4.xRotate(part, 0.05 * Math.sin(time * 2));
             }
         },
 
         // Snout + nose + tongue
         {
-            name: 'snout', parent: 'head', 
-            offset: [0 * scale, 0.0 * scale, 0.7 * scale], 
-            scale: [0.6 * scale, 0.6 * scale, 0.8 * scale],
-            anim: (t, M) => M,
-            // brown color
-            color: [0.4, 0.2, 0.1, 1.0]
+            name: 'snout',
+            parent: 'head',
+            offset: [0, 0.0, 0.7],
+            scale: [0.6, 0.6, 0.8],
         },
         {
-            name: 'nose', parent: 'snout', 
-            offset: [0 * scale, 0.15 * scale, 0.5 * scale], 
-            scale: [0.2 * scale, 0.2 * scale, 0.2 * scale],
-            anim: (t, M) => M,
-            color: [0.3, 0.1, 0.1, 1.0]
+            name: 'nose',
+            parent: 'snout',
+            offset: [0, 0.15, 0.5],
+            scale: [0.2, 0.2, 0.2],
+            color: [0, 0, 0, 1.0]
         },
         {
-            name: 'tongue', parent: 'snout', 
-            offset: [0 * scale, -0.35 * scale, 0.35 * scale], 
-            scale: [0.18 * scale, 0.35 * scale, 0.05 * scale],
-             // like the tail, the tongue oscillates but at a consistent frequency!
-            // anim: (t, M) => m4.yRotate(M, Math.sin(t * 5)),
+            name: 'tongue',
+            parent: 'snout',
+            offset: [0, -0.35, 0.35],
+            scale: [0.18, 0.35, 0.05],
             color: [0.8, 0.2, 0.2, 1.0]
-        }, 
+        },
 
         // Ears
         {
-            name: 'earL', parent: 'head', 
-            offset: [-0.45 * scale, 0.6 * scale, -0.1 * scale], 
-            scale: [0.18 * scale, 0.5 * scale, 0.18 * scale],
-            // anim: (t, M) => m4.zRotate(M, 0.15 * Math.sin(t * 5))
+            name: 'earL',
+            parent: 'head',
+            offset: [-0.45, 0.6, -0.1],
+            scale: [0.18, 0.5, 0.18],
         },
         {
-            name: 'earR', parent: 'head', 
-            offset: [0.45 * scale, 0.6 * scale, -0.1 * scale], 
-            scale: [0.18 * scale, 0.5 * scale, 0.18 * scale],
-            // anim: (t, M) => m4.zRotate(M, -0.15 * Math.sin(t * 5))
+            name: 'earR',
+            parent: 'head',
+            offset: [0.45, 0.6, -0.1],
+            scale: [0.18, 0.5, 0.18],
         },
 
         // Legs (walk in place)
         {
-            name: 'legLF', parent: 'torso', 
-            offset: [-0.5 * scale, -0.5 * scale, 1 * scale], 
-            scale: [0.5 * scale, 1 * scale, 0.5 * scale],
-            anim: (t, M) => m4.xRotate(M, 0.6 * Math.sin(t * 6 + 0))
+            name: 'legLF',
+            parent: 'torso',
+            offset: [-0.5, -0.5, 1],
+            scale: [0.5, 1, 0.5],
+            anim: (time, part) => m4.xRotate(part, 0.6 * Math.sin(time * 6 + 0))
         },
         {
-            name: 'legRF', parent: 'torso', 
-            offset: [0.5 * scale, -0.5 * scale, 1 * scale], 
-            scale: [0.5 * scale, 1 * scale, 0.5 * scale],
-            anim: (t, M) => m4.xRotate(M, 0.6 * Math.sin(t * 6 + Math.PI))
+            name: 'legRF',
+            parent: 'torso',
+            offset: [0.5, -0.5, 1],
+            scale: [0.5, 1, 0.5],
+            anim: (time, part) => m4.xRotate(part, 0.6 * Math.sin(time * 6 + Math.PI))
         },
         {
-            name: 'legLB', parent: 'torso', 
-            offset: [-0.5 * scale, -0.5 * scale, -1 * scale], 
-            scale: [0.5 * scale, 1 * scale, 0.5 * scale],
-            anim: (t, M) => m4.xRotate(M, 0.6 * Math.sin(t * 6 + Math.PI))
+            name: 'legLB',
+            parent: 'torso',
+            offset: [-0.5, -0.5, -1],
+            scale: [0.5, 1, 0.5],
+            anim: (time, part) => m4.xRotate(part, 0.6 * Math.sin(time * 6 + Math.PI))
         },
         {
-            name: 'legRB', parent: 'torso', 
-            offset: [0.5 * scale, -0.5 * scale, -1 * scale], 
-            scale: [0.5 * scale, 1 * scale, 0.5 * scale],
-            anim: (t, M) => m4.xRotate(M, 0.6 * Math.sin(t * 6 + 0))
+            name: 'legRB',
+            parent: 'torso',
+            offset: [0.5, -0.5, -1],
+            scale: [0.5, 1, 0.5],
+            anim: (time, part) => m4.xRotate(part, 0.6 * Math.sin(time * 6 + 0))
         },
 
         // Tail (wag)
         {
-            name: 'tail', parent: 'torso', 
-            offset: [0, 0, -2.2 * scale], 
-            scale: [0.28 * scale, 0.28 * scale, 1.4 * scale],
+            name: 'tail', parent: 'torso',
+            offset: [0, 0, -2.2],
+            scale: [0.28, 0.28, 1.4],
             // oscillatory motion
-            anim: (t, M) => m4.yRotate(M, Math.sin(t * 8)),
-            color: [0.4, 0.2, 0.1, 1.0]
+            anim: (time, part) => m4.yRotate(part, Math.sin(time * 8)),
         },
     ];
 
@@ -187,22 +183,6 @@
     });
     // end of cube code
 
-    // the base dog state
-    const dogState = {
-        // keeping track of time spent walking used to 
-        timeWalking: 0,
-        // original position in world space (randomized to be a little far away from camera)
-        pos: [0, 0, -6],
-        // direction facing
-        direction: 1,
-        // size of dog
-        scale: 0.5,
-        // how fast per second
-        speed:  15, // 1.1,
-        // how far they can go
-        bounds: { x: [-8, 8], z: [-18, -2] },
-    };
-
     // this is for random dogs wander. Bad dogs will have own custom animations!
     function updatePosition(dogState, time) {
         const timeSinceStep = Math.max(0.001, time * 0.001 - dogState.timeWalking);
@@ -216,45 +196,97 @@
         // if the dog has hit the bounds, then turn them around and make them go in another direction!
         if (dogState.pos[0] < dogState.bounds.x[0] || dogState.pos[0] > dogState.bounds.x[1] ||
             dogState.pos[2] < dogState.bounds.z[0] || dogState.pos[2] > dogState.bounds.z[1]) {
-            dogState.direction += Math.PI; // just move them 180 degrees in radians
+            dogState.direction += 45 * (Math.PI / 180); // degrees in radians
+        }
+
+        // TODO: update distance for collision issues
+        // check for collisions with other dogs by looping through state. 
+        // if they hit another dog, turn them around!
+        for (const colDog of dogs) {
+            if (colDog === dogState) continue;
+            const dx = dogState.pos[0] - colDog.pos[0];
+            const dz = dogState.pos[2] - colDog.pos[2];
+            // euclidean distance! :)
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < .1) {
+                dogState.direction += 45 * (Math.PI / 180); // degrees in radians
+                break;
+            }
         }
     }
 
-    function drawDog(gl, programInfo, projection, view, time) {
+    function drawDog(gl, programInfo, projection, view, time, dogState) {
         updatePosition(dogState, time);
         const world = dogParts.map(() => m4.identity());
         const idx = Object.fromEntries(dogParts.map((p, i) => [p.name, i]));
+        let mvp;
 
-        // TODO: going to just do a different func for every body part to make things easy
         for (let i = 0; i < dogParts.length; i++) {
             const part = dogParts[i];
             let partMatrix = part.parent ? m4.copy(world[idx[part.parent]]) : m4.identity();
+            let offset = part.offset || [0, 0, 0];
 
-            // root/global dog transform ONCE on torso (ok for children to inherit)
+            // global scaling/transforming that everything will inherit
             if (part.name === 'torso') {
                 partMatrix = m4.translate(partMatrix, dogState.pos[0], dogState.pos[1], dogState.pos[2]);
                 partMatrix = m4.yRotate(partMatrix, dogState.direction);
-                partMatrix = m4.scale(partMatrix, dogState.scale, dogState.scale, dogState.scale); // global size
+                partMatrix = m4.scale(partMatrix, dogState.scale, dogState.scale, dogState.scale);
+            }
+
+            if (dogState.floppy && (part.name === 'earL' || part.name === 'earR')) {
+                const earX = part.name === 'earL' ? -0.69  : 0.69;
+                offset = [earX, 0.5 * dogState.scale, -0.4 * dogState.scale];
+            }
+
+            // for any breed-specific modifications!
+            let modifiedScale = [];
+            if (dogState.modifications) {
+                // Torso mods (update torso and children)
+                if (dogState.modifications.torso > 0 && part.name === 'torso') {
+                    modifiedScale = [part.scale[0], part.scale[1], part.scale[2] * dogState.modifications.torso];
+                }
+                if (dogState.modifications.torso && part.parent === 'torso') {
+                    // some things will get pushed back on the z index
+                    let inverse = part.name === 'legLB' || part.name === 'legRB' || part.name === 'tail'
+                    offset = [offset[0], offset[1], offset[2] + dogState.modifications.torso * .6 * (inverse ? -1 : 1)];
+                }
             }
 
             // local world offset + animation (no scale)
-            partMatrix = m4.translate(partMatrix, part.offset[0], part.offset[1], part.offset[2]);
+            partMatrix = m4.translate(partMatrix, offset[0], offset[1], offset[2]);
 
             // add part-specific animation if needed
             if (part.anim) {
                 partMatrix = part.anim(time, partMatrix);
             }
 
+            // need to update worlds arr so the parent transforms are applied
             world[i] = partMatrix;
-        }
+            const partColor = dogState.partColors[part.name] ? dogState.partColors[part.name] : 
+                part.name !== 'tongue' && part.name !== 'nose' ? dogState.wholeColor || part.color || colors.default : part.color || colors.default;
+            let obj = drawObject({
+                gl,
+                projection,
+                programInfo,
+                view,
+                world: world[i],
+                tX: offset[0],
+                tY: offset[1],
+                tZ: offset[2],
+                sX: modifiedScale[0] || part.scale[0],
+                sY: modifiedScale[1] || part.scale[1],
+                sZ: modifiedScale[2] || part.scale[2],
+                color: partColor
+            });
 
-        for (let i = 0; i < dogParts.length; i++) {
-            const part = dogParts[i];
-            drawObject({ gl, projection, programInfo, view, world: world[i], tX: part.offset[0], tY: part.offset[1], tZ: part.offset[2], sX: part.scale[0], sY: part.scale[1], sZ: part.scale[2], color: part.color || [0.8, 0.6, 0.3, 1.0] });
+            if (part.name === 'torso') {
+                mvp = obj;
+            }
         }
+        return mvp;
     }
 
-    function drawObject({gl, projection, programInfo, view, world, tX, tY, tZ, sX, sY, sZ, color}) {
+    function drawObject({ gl, projection, programInfo, view, world, tX, tY, tZ, sX, sY, sZ, color }) {
         webglUtils.setBuffersAndAttributes(gl, programInfo, cube);
 
         // this is for stationary objects with no movement logic!
@@ -283,10 +315,126 @@
     }
 
     const colors = {
-        'slime': [99 / 255, 205 / 255, 134 / 255, 1],
-        'brown': [139 / 255, 69 / 255, 19 / 255, 1],
-        'purple': [128 / 255, 0, 128 / 255, 1],
+        slime: [99 / 255, 205 / 255, 134 / 255, 1],
+        brown: [139 / 255, 69 / 255, 19 / 255, 1],
+        purple: [128 / 255, 0, 128 / 255, 1],
+        default: [0.8, 0.6, 0.3, 1.0],
+        black: [0, 0, 0, 1],
+        yellow: [255 / 255, 255 / 255, 0, 1],
+        white: [255 / 255, 255 / 255, 255 / 255, 1],
+        lightBrown: [203 / 255, 167 / 255, 121 / 255, 1],
+        golden: [245 / 255, 204 / 255, 127 / 255, 1],
+        blue: [68 / 255, 100 / 255, 159 / 255, 1]
     }
+
+
+
+    // the base dog state
+    const dogState = {
+        // keeping track of time spent walking used to 
+        timeWalking: 0,
+        // original position in world space (randomized to be a little far away from camera)
+        pos: [0, 0, -6],
+        // direction facing
+        direction: 1,
+        // size of dog
+        scale: 0.5,
+        // how fast per second
+        speed: 15, // 5 seems to be pragmatic
+        // how far they can go
+        bounds: { x: [-8, 8], z: [-18, -2] },
+        floppy: false,
+        partColors: {},
+    };
+
+    // TODO: floppy dogs should have darker ears
+    const breeds = {
+        // german: {
+        //     ...dogState,
+        //     breedName: "German Shepherd",
+        //     color: colors.brown,
+        //     scale: 0.5,
+        //     partColors: {
+        //         snout: colors.brown,
+        //         earL: colors.brown,
+        //         earR: colors.brown,
+        //         tail: colors.brown,
+        //     }
+        // },
+        westie: {
+            ...dogState,
+            breedName: "West Highland White Terrier",
+            scale: 0.3,
+            wholeColor: colors.white,
+        },
+        golden: {
+            ...dogState,
+            breedName: "Golden Retriever",
+            scale: 0.45,
+            floppy: true,
+            wholeColor: colors.golden,
+        },
+        // chihuahua: {
+        //     ...dogState,
+        //     breedName: "Chihuahua",
+        //     wholeColor: colors.lightBrown,
+        //     scale: 0.2
+        // },
+        // chow: {
+        //     ...dogState,
+        //     breedName: "Chow Chow",
+        //     wholeColor: colors.brown,
+        //     scale: 0.4,
+        //     partColors: {
+        //         tongue: colors.blue,
+        //     }
+        // },
+        // jack: {
+        //     ...dogState,
+        //     breedName: "Jack Russell Terrier",
+        //     wholeColor: colors.white,
+        //     scale: 0.2,
+        //     partColors: {
+        //         body: colors.brown,
+        //         earL: colors.brown,
+        //         earR: colors.brown,
+        //         tail: colors.brown,
+        //     }
+        // },
+        dachshund: {
+            ...dogState,
+            breedName: "Dachshund",
+            wholeColor: colors.brown,
+            scale: 0.2,
+            floppy: true,
+            modifications: {
+                torso: 1.5,
+            }
+        },
+        // pug: {
+        //     ...dogState,
+        //     breedName: "Pug",
+        //     wholeColor: colors.black,
+        //     scale: 0.2,
+        // }
+    };
+
+
+    // yay let's generate some dogs
+    const dogs = [];
+    for (let i = 0; i < 15; i++) {
+        const breedName = Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
+        const breed = breeds[breedName];
+        const x = Math.random() * 40 - 20;
+        const z = Math.random() * 40 - 20;
+        const position = [x, 0, z];
+        const direction = Math.random() * Math.PI * 2;
+        const bounds = { x: [x - 10, x + 10], z: [z - 10, z + 10] };
+        // if the doggy is a mutt, change their colors
+        dogs.push({ ...breed, breed: breedName, id: i, pos: position, direction, bounds });
+    }
+
+    console.log(dogs);
 
     // TODO: create a single drawObject function
     return {
@@ -294,6 +442,13 @@
         drawObject: drawObject,
         cube: cube,
         colors: colors,
+        dogs: dogs,
     };
 
 }));
+
+let hex = {
+    golden: 'rgba(245, 204, 127, 1)',
+    lightBrown: 'rgba(203, 167, 121, 1)',
+    blue: 'rgba(68, 100, 159, 1)'
+};
