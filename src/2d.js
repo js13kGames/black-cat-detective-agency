@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  let webglUtils = window.webglUtils;
+
   const cameraUI = document.getElementById("camera-ui");
   const gameUi = document.getElementById("c");
   cameraUI.classList.add("hidden");

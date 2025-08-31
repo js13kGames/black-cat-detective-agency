@@ -61,6 +61,10 @@
   }
 `;
 
+  let webglUtils = window.webglUtils;
+  let m4 = window.m4;
+  let objectModule = window.objectModule;
+
   /* Setup WebGL context and shaders */
   const canvas = document.getElementById('c');
   const gl = canvas.getContext('webgl');
