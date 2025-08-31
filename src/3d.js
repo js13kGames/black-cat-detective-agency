@@ -154,6 +154,7 @@
       const yPositionInBounds = y >= -1 && y <= 1;
       const zPositionInBounds = z >= 0 && z <= 1;
 
+      // TODO: make sure they're not too far away
       let inView = xPositionInBounds && yPositionInBounds && zPositionInBounds;
       if (inView) {
         if (!capturedDistance || z < capturedDistance) {

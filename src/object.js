@@ -250,6 +250,18 @@
                     let inverse = part.name === 'legLB' || part.name === 'legRB' || part.name === 'tail'
                     offset = [offset[0], offset[1], offset[2] + dogState.modifications.torso * .6 * (inverse ? -1 : 1)];
                 }
+                // tail mod (no children)
+                if (dogState.modifications.tail && part.name === 'tail') {
+                    modifiedScale = [part.scale[0], part.scale[1], dogState.modifications.tail];
+                    offset = [offset[0], offset[1], offset[2] + dogState.modifications.tail];
+                }
+                // snout mod (children are nose and tongue)
+                if (dogState.modifications.snout && part.name === 'snout') {
+                    modifiedScale = [part.scale[0], part.scale[1], dogState.modifications.snout];
+                }
+                if (dogState.modifications.snout && part.parent === 'snout') {
+                    offset = [offset[0], offset[1], offset[2] - dogState.modifications.snout * .7];
+                }
             }
 
             // local world offset + animation (no scale)
@@ -349,23 +361,26 @@
 
     // TODO: floppy dogs should have darker ears
     const breeds = {
-        // german: {
-        //     ...dogState,
-        //     breedName: "German Shepherd",
-        //     color: colors.brown,
-        //     scale: 0.5,
-        //     partColors: {
-        //         snout: colors.brown,
-        //         earL: colors.brown,
-        //         earR: colors.brown,
-        //         tail: colors.brown,
-        //     }
-        // },
+        german: {
+            ...dogState,
+            breedName: "German Shepherd",
+            color: colors.brown,
+            scale: 0.5,
+            partColors: {
+                snout: colors.brown,
+                earL: colors.brown,
+                earR: colors.brown,
+                tail: colors.brown,
+            }
+        },
         westie: {
             ...dogState,
             breedName: "West Highland White Terrier",
             scale: 0.3,
             wholeColor: colors.white,
+            modifications: {
+                tail: 0.4,
+            }
         },
         golden: {
             ...dogState,
@@ -374,33 +389,39 @@
             floppy: true,
             wholeColor: colors.golden,
         },
-        // chihuahua: {
-        //     ...dogState,
-        //     breedName: "Chihuahua",
-        //     wholeColor: colors.lightBrown,
-        //     scale: 0.2
-        // },
-        // chow: {
-        //     ...dogState,
-        //     breedName: "Chow Chow",
-        //     wholeColor: colors.brown,
-        //     scale: 0.4,
-        //     partColors: {
-        //         tongue: colors.blue,
-        //     }
-        // },
-        // jack: {
-        //     ...dogState,
-        //     breedName: "Jack Russell Terrier",
-        //     wholeColor: colors.white,
-        //     scale: 0.2,
-        //     partColors: {
-        //         body: colors.brown,
-        //         earL: colors.brown,
-        //         earR: colors.brown,
-        //         tail: colors.brown,
-        //     }
-        // },
+        chihuahua: {
+            ...dogState,
+            breedName: "Chihuahua",
+            wholeColor: colors.lightBrown,
+            scale: 0.2
+        },
+        chow: {
+            ...dogState,
+            breedName: "Chow Chow",
+            wholeColor: colors.brown,
+            scale: 0.4,
+            partColors: {
+                tongue: colors.blue,
+            },
+            modifications: {
+                tail: 0.2,
+            }
+        },
+        jack: {
+            ...dogState,
+            breedName: "Jack Russell Terrier",
+            wholeColor: colors.white,
+            scale: 0.2,
+            partColors: {
+                body: colors.brown,
+                earL: colors.brown,
+                earR: colors.brown,
+                tail: colors.brown,
+            },
+            modifications: {
+                tail: 0.5,
+            }
+        },
         dachshund: {
             ...dogState,
             breedName: "Dachshund",
@@ -411,12 +432,21 @@
                 torso: 1.5,
             }
         },
-        // pug: {
-        //     ...dogState,
-        //     breedName: "Pug",
-        //     wholeColor: colors.black,
-        //     scale: 0.2,
-        // }
+        pug: {
+            ...dogState,
+            breedName: "Pug",
+            wholeColor: colors.lightBrown,
+            scale: 0.2,
+            partColors: {
+                earL: colors.black,
+                earR: colors.black,
+                snout: colors.black,
+            },
+            modifications: {
+                snout: 0.3,
+                tail: 0.5,
+            }
+        }
     };
 
 
@@ -425,6 +455,7 @@
     for (let i = 0; i < 15; i++) {
         const breedName = Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
         const breed = breeds[breedName];
+        // TODO: go through part colors, if they're an array, then pick one.
         const x = Math.random() * 40 - 20;
         const z = Math.random() * 40 - 20;
         const position = [x, 0, z];
