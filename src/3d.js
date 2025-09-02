@@ -801,7 +801,9 @@
       otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie'],
       otherDogCount: 6,
       text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
-      allDogNames: dogNames.slice().sort(() => Math.random() - 0.5)
+      allDogNames: dogNames.slice().sort(() => Math.random() - 0.5),
+      redHerrings: [],
+      redHerringCount: 0,
     }
   ]
 
