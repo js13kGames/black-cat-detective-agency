@@ -145,14 +145,20 @@
   /* Setup WebGL program */
   const programInfo = webglUtils.createProgramInfo(gl, [vertexShader, fragmentShader]);
   gl.useProgram(programInfo.program);
+  
 
   /* this is the frustum test */
+  // Obviously this could use a LOT of cleaning up!
   function isObjectInCamera(mvps, obstacles, view) {
     console.log(mvps)
+    // use this to check for other-dog obstruction
+    const badMvp = mvps.find(mvp => mvp.isBad);
     const centerOfObject = [0, 0, 0]; // center of the object
+    const [bx, by, bz] = m4.transformPoint(badMvp.mvp, centerOfObject);
+
     // check which dog is closest in clip space (z-axis)
     let closestDog = null;
-    let capturedDistance = 0;
+    let capturedZDistance = 0;
     let missReason = null;
     for (let culprit of mvps) {
       // check if the culprit is in the camera frustum
@@ -184,23 +190,38 @@
       }
 
       // make sure they aren't too far away
-      // (note: this is checking the FOV not the view!)
-      const maxDistance = 20 * (fieldOfViewInRadians / (60 * Math.PI / 180));
-      const dogEyePos = m4.transformPoint(view, culprit.pos);
-      // z pos will be negative
-      let tooFar = -dogEyePos[2] < maxDistance;
+      const dogCam = m4.transformPoint(view, culprit.pos);
+      const dogCamY = -dogCam[2];
+      const fovScale = 1 / Math.tan(fieldOfViewInRadians * 0.5);
+      const maxDistance = fovScale / 0.2; // TODO: .2 seems good for now but keep testing
+      const tooFar = dogCamY > maxDistance;
+
       if (tooFar) {
         if (culprit.isBad) {
-          // console.log(-dogEyePos[2], ' - ', maxDistance);
           missReason = `${culprit.breedName} is too far away`;
+        } else {
+          // TODO: this is just debugging, but maybe add a message like "zoom in"
+          missReason = 'anything is too far away';
         }
         continue;
       }
 
+      // check if non-culprit dog is obstructing
+    
       if (inView) {
-        if (!capturedDistance || z < capturedDistance) {
+        if (!capturedZDistance || z < capturedZDistance) {
+          // if a non-culprit dog is NOT obstructing the bad dog, then they should not be
+          // considered the closest dog
+          if (!culprit.isBad && badMvp) {
+            // if the bad dog is in front of the non-culprit dog, then they are obstructing
+            const xDist = Math.abs(bx - x);
+            // dogs are thinner than trees
+            if (bz < z && xDist < 0.1) {
+              continue;
+            }
+          }
           closestDog = culprit;
-          capturedDistance = z;
+          capturedZDistance = z;
         }
       }
     }
@@ -434,15 +455,10 @@
   function updatePosition(dogState, time, badAction) {
     // // debugging
     // return;
-        // they will perform the bad action every 10 seconds for 5 seconds 
-    if (badAction && time % 10 < 5) {
-      // apply bad action effects
-      if (badAction === 'tailChase') {
-        dogState.direction += 5 * (Math.PI / 180);
-        // also adjust tail and head!
-      }
+    // apply bad action effects
+    if (badAction === 'tailChase') {
+      dogState.direction += 5 * (Math.PI / 180);
     }
-
     const timeSinceStep = Math.max(0.001, time * 0.001 - dogState.timeWalking);
     dogState.timeWalking += timeSinceStep;
     const step = dogState.speed * timeSinceStep;
@@ -487,7 +503,12 @@
   function drawDog(gl, programInfo, projection, view, dogState, badAction) {
     const time = performance.now() / 1000;
 
-    updatePosition(dogState, time, badAction);
+    let badActionInProgress = null;
+    if (badAction && time % 10 < 5) {
+      badActionInProgress = badAction;
+    }
+
+    updatePosition(dogState, time, badActionInProgress);
     const world = dogParts.map(() => m4.identity());
     const idx = Object.fromEntries(dogParts.map((p, i) => [p.name, i]));
     let mvp;
@@ -539,8 +560,20 @@
       partMatrix = m4.translate(partMatrix, offset[0], offset[1], offset[2]);
 
       // add part-specific animation if needed
-      if (part.anim) {
+      if (part.anim && !badActionInProgress) {
         partMatrix = part.anim(time, partMatrix);
+      }
+
+      // add bad action mods
+      if (badActionInProgress === 'tailChase') {
+        if (part.name === 'tail') {
+          partMatrix = m4.yRotate(partMatrix, 90 * Math.PI / 180);
+          // move the tail a bit
+          partMatrix = m4.translate(partMatrix, 0, 0, 0.5);
+        }
+        if (part.name === 'head' || part.parent === 'head' || part.parent === 'snout') {
+          partMatrix = m4.yRotate(partMatrix, 90 * Math.PI / 180);
+        } 
       }
 
       // need to update worlds arr so the parent transforms are applied
