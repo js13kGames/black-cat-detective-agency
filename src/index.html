@@ -99,6 +99,7 @@
 
 <body>
 
+    <!-- TODO: obviously I need to refactor this a lot, minify css, remove the elements and create them dynamically -->
     <!-- The game! -->
     <canvas id="c"></canvas>
     <!-- The phone! -->
@@ -111,22 +112,12 @@
 
     <!-- instructions-->
     <div id="instructions" class="hidden">
-        <p>As you can see, there are a lot of bad dogs in this park!</p>
-        <p>Your job is to take pictures of all the bad dogs.</p>
-        <p>Use your mouse to look around</p>
-        <p>Hit C to enter camera mode</p>
+        <p>Hit Space to enter camera mode</p>
         <p>Hit Z to zoom in</p>
         <p>Hit X to zoom out</p>
-        <p>Hit space to take a picture</p>
-        <p>Hit I to see your album</p>
+        <p>Hit C to take a picture</p>
         <p>press P to toggle instructions </p>
         <p>Here is a list of all the dogs you've gotten so far</p>
-        <ul id="dog-list">
-            <li>
-                <input type="checkbox" name="optionName" value="optionValue">
-                <label for="optionName">German Shepherd eating garbage</label>
-            </li>
-        </ul>
     </div>
 
 

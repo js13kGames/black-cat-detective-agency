@@ -12,6 +12,7 @@
   let mainCanvas = document.getElementById("c2");
   let ctx = mainCanvas.getContext("2d");
 
+  // TODO: use object colors :)
   const gray = "rgba(218, 215, 215, 1)";
   const clawGray = "rgba(201, 191, 191, 1)";
   const mouseGray = "rgba(167, 157, 157, 1)";
@@ -165,10 +166,7 @@
       ctx.fillStyle = 'white';
       ctx.strokeStyle = 'white';
       ctx.beginPath();
-      // TODO: this should prob not be round....
-      ctx.roundRect(x, y, width, height, radii);
-      ctx.fill();
-      ctx.stroke();
+      ctx.fillRect(x, y, width, height, radii);
 
       // flag
       if (side === 'right') {
@@ -197,55 +195,13 @@
       ctx.fillText(text, x + width / 2, y + height / 2);
     })
   }
-
-  function drawScene1(time) {
-    const renderNextScene = () => {
-      startReplyTimer(time);
-      gameState = 2;
-    }
-    let textArr = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }]
+    
+  const timeToAppear = 1500;
+  function drawScene({ time, textArr, offset }) {
+    drawComputer();
     let timeElapsed = time - start;
-    let currentIndex = Math.floor(timeElapsed / 1000) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / 1000);
+    let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
     drawSpeech(textArr.slice(0, currentIndex + 1));
-    if (reply) {
-      renderedButtons = [
-        drawButton('yeah it\'s me', 35, renderNextScene, 'left'),
-        drawButton('who\'s asking?', 35, renderNextScene, 'right')
-      ];
-    }
-  }
-
-  function drawScene2(time) {
-    const renderNextScene = () => {
-      startReplyTimer(time);
-      gameState = 3;
-    }
-    let textArr = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }, { text: 'lakjldkfjaaaaaaaaakjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }]
-    let timeElapsed = time - start;
-    let currentIndex = Math.floor(timeElapsed / 1000) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / 1000);
-    drawSpeech(textArr.slice(0, currentIndex + 1 + 2));
-    if (reply) {
-      renderedButtons = [
-        drawButton('i don\'t work for free', 35, renderNextScene, 'left'),
-        drawButton('hissssssssss', 35, renderNextScene, 'right')
-      ];
-    }
-  }
-
-  function drawScene3(time) {
-    const renderNextScene = () => {
-      isEnding2dPart = true;
-    }
-    let textArr = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }, { text: 'lakjldkfjkjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }, { text: "dlsfjlsdkjkl", side: 'right' }, { text: "there\'s a dog problem." }, { text: 'i need you to find the pooch pooper' }];
-    let timeElapsed = time - start;
-    let currentIndex = Math.floor(timeElapsed / 1000) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / 1000);
-    drawSpeech(textArr.slice(0, currentIndex + 1 + 4));
-    if (reply) {
-      renderedButtons = [
-        drawButton('i guess!', 35, renderNextScene, 'left'),
-        drawButton('make sure catnip is ready', 35, renderNextScene, 'right')
-      ];
-    }
   }
 
   // lol just a little reminder to myself...
@@ -423,8 +379,7 @@
 
   let transitionOffset = 0;
   let isStartingGame = false;
-  let isEnding2dPart = false;
-  let gameState = 3; //  0;
+  let gameState = 3; // 0;
   let reply = true;
   let start = null;
 
@@ -434,7 +389,7 @@
   }
 
   function handleReplyTimer(time, textCount) {
-    let seconds = textCount * 1000
+    let seconds = textCount * timeToAppear + 1000; // 1 second buffer at the end
     if (!reply && start !== null && time - start > seconds) {
       reply = true;
       start = null;
@@ -442,6 +397,17 @@
       renderedButtons = [];
     }
   }
+
+  function renderNextScene(nextGameState) {
+    return function () {
+      startReplyTimer(performance.now());
+      gameState = nextGameState;
+    }
+  }
+
+  let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }];
+  let arr2 = [{ text: 'lakjldkfjaaaaaaaaakjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }];
+  let arr3 = [{ text: 'i need you to find my missing person', side: 'right' }, { text: 'can you do that for me?', side: 'left' }];
 
   function render(time) {
     ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
@@ -458,7 +424,7 @@
       }
     }
 
-    if (isEnding2dPart) {
+    if (gameState === 4) {
       transitionOffset += 40;
       if (transitionOffset > mainCanvas.width) {
         // take stuff off the map!
@@ -470,28 +436,53 @@
       }
     }
 
+
     if (gameState === 0) {
       ctx.save();
       ctx.translate(transitionOffset, 0);
       drawStart();
       ctx.restore();
-    }
-
-    // obviously i will update this lol it's cuhrazy rn!!
-    if (gameState === 1) {
-      handleReplyTimer(time, 3);
-      drawComputer();
-      drawScene1(time);
+    } else if (gameState === 1) {
+      handleReplyTimer(time, arr1.length);
+      drawScene({
+        time,
+        textArr: arr1,
+        offset: 0
+      });
+      if (reply) {
+        renderedButtons = [
+          drawButton('yeah it\'s me', 35, renderNextScene(2), 'left'),
+          drawButton('who\'s asking?', 35, renderNextScene(2), 'right')
+        ];
+      }
     } else if (gameState === 2) {
-      handleReplyTimer(time, 3);
-      drawComputer();
-      drawScene2(time);
-    } else if (gameState === 3) {
+      handleReplyTimer(time, arr2.length);
+      drawScene({
+        time,
+        textArr: [...arr1, ...arr2],
+        offset: arr1.length - 1,
+      });
+      if (reply) {
+        renderedButtons = [
+          drawButton('i don\'t work for free', 35, renderNextScene(3), 'left'),
+          drawButton('hissssssssss', 35, renderNextScene(3), 'right')
+        ];
+      }
+    } else if (gameState === 3 || gameState === 4) {
+      handleReplyTimer(time, arr3.length);
       ctx.save();
       ctx.translate(transitionOffset, 0);
-      handleReplyTimer(time, 4);
-      drawComputer();
-      drawScene3(time);
+      drawScene({
+        time,
+        textArr: [...arr1, ...arr2, ...arr3],
+        offset: arr1.length + arr2.length - 1,
+      });
+      if (reply) {
+        renderedButtons = [
+          drawButton('i need you to find my missing person', 35, renderNextScene(4), 'left'),
+          drawButton('can you do that for me?', 35, renderNextScene(4), 'right')
+        ];
+      }
       ctx.restore();
     }
 
