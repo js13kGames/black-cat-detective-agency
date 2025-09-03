@@ -806,7 +806,7 @@ let photoDialog = '';
 let caughtDogBlob = null;
 
 /* game logic! */
-const dogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop']
+const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Morgan", "Sadie", "Wilson", "Rufus", "Sargent", "Floss", "Deemo", "Cecil", "Lloyd", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy"].slice().sort(() => Math.random() - 0.5);
 let missionIndex = 0;
 const missions = [
   {
@@ -815,11 +815,23 @@ const missions = [
     otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie'],
     otherDogCount: 6,
     text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
-    allDogNames: dogNames.slice().sort(() => Math.random() - 0.5),
+    redHerrings: [],
+    redHerringCount: 0,
+  },
+  {
+    targetBreed: null,
+    badAction: 'speed',
+    otherDogBreeds: null,
+    otherDogCount: 10,
+    text: 'Please take a picture of the dog running at full speed. It is very distracting!',
     redHerrings: [],
     redHerringCount: 0,
   }
 ]
+// fill instructions with initial mission text
+const missionText = document.getElementById('mission-text')
+missionText.textContent = missions[missionIndex].text
+
 
 /* the render loop */
 let dialogOpen = false;
@@ -827,9 +839,6 @@ function render3D(time = 0) {
   time = time * 0.0001 + 5;
   allDogs = [];
   // set up the next mission while they have the dialog open!
-  if (dialogOpen) {
-    // missionIndex++;
-  }
   const currentMission = missions[missionIndex];
 
   resize3d();
@@ -868,16 +877,19 @@ function render3D(time = 0) {
 
   drawGround(gl, view, projection);
 
+
+  let prevMission = missions[missionIndex - 1];
+  let startIndex = prevMission ? prevMission.otherDogCount + 1 : 0;
   // make the bad dog >:) 
   badDog = badDog ?? generateBaseDog(currentMission.targetBreed);
   const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction);
-  allDogs.push({ mvp: badDogMvp, ...badDog, dogName: currentMission.allDogNames[0], isBad: true });
+  allDogs.push({ mvp: badDogMvp, ...badDog, dogName: allDogNames[startIndex], isBad: true });
 
   // make the other dogs!
   otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds);
   otherDogs.forEach((dog, i) => {
     let dogMvp = drawDog(gl, programInfo, projection, view, dog);
-    allDogs.push({ mvp: dogMvp, ...dog, dogName: currentMission.allDogNames[i + 1], isBad: false });
+    allDogs.push({ mvp: dogMvp, ...dog, dogName: allDogNames[startIndex + i + 1], isBad: false });
   });
 
   // draw grass

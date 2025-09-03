@@ -88,7 +88,7 @@ function drawComputer() {
   ctx.fillText("x", computerWidth + 5, 50);
 }
 
-function drawButton(text, fontSize, onClick, alignment) {
+function drawButton({ text, onClick, alignment, fontSize = 35 }) {
   // trying to set the width dynamically
   const width = (fontSize / 1.5) * text.length;
   const height = fontSize * 1.5;
@@ -147,23 +147,24 @@ function drawStart() {
   drawMouse();
   // add the start button
   const onClick = () => isStartingGame = true;
-  renderedButtons = [drawButton('Start', 85, onClick)];
+  renderedButtons = [drawButton({ text: 'Start', fontSize: 85, onClick })];
 }
 
 function drawSpeech(arr) {
+  let textContainsPhoto = false;
   arr.forEach(({ text, photo, side }, index) => {
     const fontSize = 18;
     const photoWidth = 250;
     const photoHeight = 200;
     const photoPadding = 20;
     // trying to set the width dynamically - also account for photo
-    const width =  text ? (fontSize / 1.5) * text.length : photoWidth + photoPadding;
+    const width = text ? (fontSize / 1.5) * text.length : photoWidth + photoPadding;
     const height = text ? fontSize * 1.5 : photoHeight + photoPadding;
 
     // bubble
     const x = side === 'right' ? mainCanvas.width - width - 75 : 75;
-    const isPreviousPic = arr[index - 1] && arr[index - 1].photo;
-    const y = 100 + (50 * index) + (isPreviousPic ? photoHeight + photoPadding : 0);
+    const y = 100 + (50 * index) + (textContainsPhoto ? photoHeight + photoPadding : 0);
+    textContainsPhoto = textContainsPhoto || photo ? true : false; // set after applying photo
     const radii = 10;
     ctx.fillStyle = 'white';
     ctx.strokeStyle = 'white';
@@ -210,7 +211,7 @@ function cropImg(img, targetWidth, targetHeight, x, y) {
     scaledHeight = scaledWidth / boxAspect;
     startY = (img.height - scaledHeight) / 2;
   }
-  ctx2D.drawImage(img, 
+  ctx2D.drawImage(img,
     startX, startY, // start x y
     scaledWidth, scaledHeight, // crop amount
     x, y, // dest x y
@@ -219,11 +220,13 @@ function cropImg(img, targetWidth, targetHeight, x, y) {
 }
 
 const timeToAppear = 1500;
-function drawScene({ time, textArr, offset }) {
+function drawScene({ time, textArr, offset, hasPicture }) {
   drawComputer();
-  let timeElapsed = time - start;
-  let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
-  drawSpeech(textArr.slice(0, currentIndex + 1));
+  if (!hasPicture || dialogImgLoaded) {
+    let timeElapsed = time - start;
+    let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
+    drawSpeech(textArr.slice(0, currentIndex + 1));
+  }
 }
 
 // lol just a little reminder to myself...
@@ -404,7 +407,7 @@ function resize() {
 let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
-window.gameState =  0;
+window.gameState = 4; // 0;
 let reply = true;
 let start = null;
 
@@ -444,16 +447,19 @@ function setDialogImage(blob) {
   dialogImg.src = URL.createObjectURL(blob);
 }
 
-function drawDialog() {
-  drawComputer();
-  if (dialogImgLoaded) {
-    drawSpeech([{photo: dialogImg, side: 'right'}, {text: photoDialog, side: 'left'}]);
-  }
-}
-
 let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }];
 let arr2 = [{ text: 'lakjldkfjaaaaaaaaakjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }];
 let arr3 = [{ text: 'i need you to find my missing person', side: 'right' }, { text: 'can you do that for me?', side: 'left' }];
+
+
+function renderNextMission() {
+  return function () {
+    window.gameState = 4;
+    missionIndex++;
+    missionText.textContent = (missions[missionIndex].text);
+    zoomAmount = 0;
+  }
+}
 
 function render(time) {
   ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
@@ -470,33 +476,39 @@ function render(time) {
     }
   }
 
+  // returning back to the 3d view
   if (window.gameState === 4) {
     transitionOffset += 40;
     if (transitionOffset > mainCanvas.width) {
-      // take stuff off the map!
       mainCanvas.classList.add("hidden");
       gameUi.classList.remove("hidden");
       document.getElementById('instructions').classList.remove('hidden');
-      // cancelAnimationFrame(request);
-      // return; // this will stop this render loop?
     }
   }
 
   // dialog state!
   if (window.gameState === 5) {
-    // TODO: start reply timer
     if (dialogTransitionOffset === null) {
       dialogTransitionOffset = mainCanvas.width;
+      startReplyTimer(time);
     }
     dialogTransitionOffset -= 40;
     if (dialogTransitionOffset > 0) {
       ctx.save();
       ctx.translate(dialogTransitionOffset, 0);
-      drawDialog();
+      drawScene({ textArr: [] });
       ctx.restore();
     } else {
-      drawDialog();
+      handleReplyTimer(time, 3);
+
+      let missionComplete1Arr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another dog!', side: 'left' }];
+      drawScene({ time, textArr: missionComplete1Arr, offset: 0, hasPicture: true });
       dialogTransitionOffset = 0;
+      if (reply) {
+        renderedButtons = [
+          drawButton({ text: 'ok?????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
+        ];
+      }
     }
   } else {
     dialogTransitionOffset = null;
@@ -513,7 +525,7 @@ function render(time) {
     //   drawStart();
     //   ctx.restore();
     // } else {
-      drawStart();
+    drawStart();
     //   transitionOffset = 0;
     // }
   } else if (window.gameState === 1) {
@@ -525,8 +537,8 @@ function render(time) {
     });
     if (reply) {
       renderedButtons = [
-        drawButton('yeah it\'s me', 35, renderNextScene(2), 'left'),
-        drawButton('who\'s asking?', 35, renderNextScene(2), 'right')
+        drawButton({ text: 'yeah it\'s me', fontSize: 35, onClick: renderNextScene(2), alignment: 'left' }),
+        drawButton({ text: 'who\'s asking?', fontSize: 35, onClick: renderNextScene(2), alignment: 'right' })
       ];
     }
   } else if (window.gameState === 2) {
@@ -538,8 +550,8 @@ function render(time) {
     });
     if (reply) {
       renderedButtons = [
-        drawButton('i don\'t work for free', 35, renderNextScene(3), 'left'),
-        drawButton('hissssssssss', 35, renderNextScene(3), 'right')
+        drawButton({ text: 'i don\'t work for free', fontSize: 35, onClick: renderNextScene(3), alignment: 'left' }),
+        drawButton({ text: 'hissssssssss', fontSize: 35, onClick: renderNextScene(3), alignment: 'right' })
       ];
     }
   } else if (window.gameState === 3 || window.gameState === 4) {
@@ -553,8 +565,8 @@ function render(time) {
     });
     if (reply) {
       renderedButtons = [
-        drawButton('i need you to find my missing person', 35, renderNextScene(4), 'left'),
-        drawButton('can you do that for me?', 35, renderNextScene(4), 'right')
+        drawButton({ text: 'i need you to find my missing person', fontSize: 35, onClick: renderNextScene(4), alignment: 'left' }),
+        drawButton({ text: 'can you do that for me?', fontSize: 35, onClick: renderNextScene(4), alignment: 'right' })
       ];
     }
     ctx.restore();
