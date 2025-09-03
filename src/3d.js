@@ -803,7 +803,6 @@ let fieldOfViewInRadians = 60 * Math.PI / 180; // how wide the camera's view is 
 
 /* dialog Logic */
 let photoDialog = '';
-let dialogTransitionOffset = 0;
 let caughtDogBlob = null;
 
 /* game logic! */
@@ -943,7 +942,6 @@ function render3D(time = 0) {
         canvas.classList.add('hidden');
         canvas2D.classList.remove('hidden');
         dialogOpen = true;
-        dialogTransitionOffset = 0;
       });
 
     }

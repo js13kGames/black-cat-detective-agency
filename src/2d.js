@@ -401,9 +401,10 @@ function resize() {
   }
 }
 
-let transitionOffset = 0;
+let transitionOffset = null;
+let dialogTransitionOffset = null;
 let isStartingGame = false;
-window.gameState = 3; // 0;
+window.gameState =  0;
 let reply = true;
 let start = null;
 
@@ -483,23 +484,38 @@ function render(time) {
 
   // dialog state!
   if (window.gameState === 5) {
-    // transitionOffset += 40;
-    // if (transitionOffset < mainCanvas.width) {
-    //   // put stuff ON the map!
-    //   ctx.save();
-    //   ctx.translate(transitionOffset, 0);
-    //   drawDialog();
-    //   ctx.restore();
-    // } else {
+    // TODO: start reply timer
+    if (dialogTransitionOffset === null) {
+      dialogTransitionOffset = mainCanvas.width;
+    }
+    dialogTransitionOffset -= 40;
+    if (dialogTransitionOffset > 0) {
+      ctx.save();
+      ctx.translate(dialogTransitionOffset, 0);
       drawDialog();
-    // }
+      ctx.restore();
+    } else {
+      drawDialog();
+      dialogTransitionOffset = 0;
+    }
+  } else {
+    dialogTransitionOffset = null;
   }
 
   if (window.gameState === 0) {
-    ctx.save();
-    ctx.translate(transitionOffset, 0);
-    drawStart();
-    ctx.restore();
+    // if (transitionOffset === null) {
+    //   transitionOffset = mainCanvas.width;
+    // }
+    // transitionOffset -= 40;
+    // if (transitionOffset > 0) {
+    //   ctx.save();
+    //   ctx.translate(transitionOffset, 0);
+    //   drawStart();
+    //   ctx.restore();
+    // } else {
+      drawStart();
+    //   transitionOffset = 0;
+    // }
   } else if (window.gameState === 1) {
     handleReplyTimer(time, arr1.length);
     drawScene({
