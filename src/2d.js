@@ -489,7 +489,7 @@ function render(time) {
   }
 
   // dialog state!
-  if (window.gameState === 5) {
+  if (window.gameState === 5) { // >= 5
     if (dialogTransitionOffset === null) {
       dialogTransitionOffset = mainCanvas.width;
       startReplyTimer(time);

@@ -807,7 +807,8 @@ function generateBaseDog(inputBreedName, inputX, inputZ) {
 function generateDogs(numDogs, breedNames) {
   let dogs = [];
   for (let i = 0; i < numDogs; i++) {
-    const baseDog = generateBaseDog(breedNames ? breedNames[i] : null);
+    // will loop through breeds so we have a good variety but not too much of one!
+    const baseDog = generateBaseDog(breedNames ? breedNames[i % breedNames.length] : null);
     dogs.push({ ...baseDog });
   }
   return dogs;
@@ -834,7 +835,8 @@ let missionIndex = 0;
 const badActions = ['tailChase', 'speed']
 const missions = [
   {
-    targetBreed: 'lab', // I want a dog with a thick tail
+    // maybe make this a german shepherd?
+    targetBreed: 'lab',
     badAction: 'tailChase',
     otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie'],
     otherDogCount: 6,
@@ -844,7 +846,7 @@ const missions = [
   {
     targetBreed: null,
     badAction: 'speed',
-    otherDogBreeds: null,
+    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
     otherDogCount: 10,
     text: 'Please take a picture of the dog running at full speed. It is very distracting!',
     redHerringCount: 1,
@@ -972,7 +974,7 @@ function render3D(time = 0) {
       canvas.toBlob(blob => {
         setDialogImage(blob)
         document.exitPointerLock();
-        window.gameState = 5;
+        window.gameState = 5; // + missionIndex
         // caughtDogBlob = blob;
         photoDialog = `You got the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`
         document.getElementById('camera-ui').classList.add('hidden');
