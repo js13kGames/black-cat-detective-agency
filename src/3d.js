@@ -839,7 +839,6 @@ const missions = [
     otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie'],
     otherDogCount: 6,
     text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
-    redHerrings: [],
     redHerringCount: 0,
   },
   {
@@ -848,7 +847,6 @@ const missions = [
     otherDogBreeds: null,
     otherDogCount: 10,
     text: 'Please take a picture of the dog running at full speed. It is very distracting!',
-    redHerrings: [], // specific dogs?
     redHerringCount: 1,
   }
 ]
@@ -912,11 +910,12 @@ function render3D(time = 0) {
   otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds);
   otherDogs.forEach((dog, i) => {
     // make a red herring if applicable
+    let redHerringAction = null;
     if (currentMission.redHerringCount && i < currentMission.redHerringCount) {
       // give the dog a badAction!
-      dog.badAction = badActions[0];
+      redHerringAction = badActions[0];
     }
-    let dogMvp = drawDog(gl, programInfo, projection, view, dog);
+    let dogMvp = drawDog(gl, programInfo, projection, view, dog, redHerringAction, false);
     allDogs.push({ mvp: dogMvp, ...dog, dogName: allDogNames[startIndex + i + 1], isBad: false });
   });
 
