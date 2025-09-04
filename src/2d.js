@@ -458,6 +458,8 @@ function renderNextMission() {
     missionIndex++;
     missionText.textContent = (missions[missionIndex].text);
     zoomAmount = 0;
+    badDog = null;
+    otherDogs = null;
   }
 }
 
@@ -506,7 +508,7 @@ function render(time) {
       dialogTransitionOffset = 0;
       if (reply) {
         renderedButtons = [
-          drawButton({ text: 'ok?????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
+          drawButton({ text: 'ok???????????????????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
         ];
       }
     }
