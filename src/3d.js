@@ -214,7 +214,6 @@ function isObjectInCamera(mvps, obstacles, view) {
     }
 
     // check if non-culprit dog is obstructing
-
     if (inView) {
       if (!capturedZDistance || z < capturedZDistance) {
         // if a non-culprit dog is NOT obstructing the bad dog, then they should not be
@@ -229,13 +228,21 @@ function isObjectInCamera(mvps, obstacles, view) {
         }
 
         // if you did all that, but the dog isn't engaging in the bad action, then they are not the suspect
-        if (culprit.isBad && !culpritIsMisbehaving) {
+        if (culprit.isBad && (!culpritIsMisbehaving && culprit.badAction !== 'doughnut')) { // TODO: have perspective style bad action
           missReason = `You got the right ${culprit.breedName} but they aren't engaging in the bad action!`;
           continue;
-        } else {
-          closestDog = culprit;
-          capturedZDistance = z;
+        } else if (culprit.isBad && culprit.badAction === 'doughnut') {
+          // Use snout position instead of head for facingCamera check
+          console.log('doughnut check');
+          console.log(culprit.direction);
+          const facingCamera = false; // TODO: implement facing camera check
+          if (!facingCamera) {
+            missReason = `You got the right ${culprit.breedName} but they aren't facing the camera!`;
+            continue;
+          }
         }
+        closestDog = culprit;
+        capturedZDistance = z;
       }
     }
   }
@@ -474,16 +481,38 @@ function updatePosition(dogState, time, badAction) {
     dogState.direction += 5 * (Math.PI / 180);
   }
   if (badAction === 'speed') {
-    dogState.speed = 45; // way faster!
+    dogState.speed = 50; // TODO: way faster??
+  }
+  // dog will only move up and down!
+  if (badAction === 'jump') {
+    const maxJump = 0.5;
+    // starting jump
+    if (dogState.velocity === null || dogState.pos[1] <= 0) {
+      dogState.velocity = 0.05;
+      dogState.pos[1] = 0.05;
+    }
+    dogState.pos[1] += dogState.velocity;
+    dogState.velocity -= 0.01;
+     if (dogState.pos[1] > maxJump) {
+      dogState.pos[1] = maxJump;
+    } else if (dogState.pos[1] <= 0) {
+      // no digging dogs
+      dogState.pos[1] = 0;
+    }
+  } else {
+    dogState.pos[1] = 0;
+    dogState.velocity = null;
   }
 
   const timeSinceStep = Math.max(0.001, time * 0.001 - dogState.timeWalking);
   dogState.timeWalking += timeSinceStep;
   const step = dogState.speed * timeSinceStep;
-  // update x position
-  dogState.pos[0] += Math.sin(dogState.direction) * step;
-  // update z position
-  dogState.pos[2] += Math.cos(dogState.direction) * step;
+  if (badAction !== 'jump') {
+    // update x position
+    dogState.pos[0] += Math.sin(dogState.direction) * step;
+    // update z position
+    dogState.pos[2] += Math.cos(dogState.direction) * step;
+  }
 
   // if the dog has hit the bounds, then turn them around and make them go in another direction!
   if (dogState.pos[0] < dogState.bounds.x[0] || dogState.pos[0] > dogState.bounds.x[1] ||
@@ -493,17 +522,29 @@ function updatePosition(dogState, time, badAction) {
 
   // check for collisions with other dogs by looping through state. 
   // if they hit another dog, turn them around!
+  // TODO: maybe stop the other dog from moving until the dog is safely placed?
   for (const colDog of allDogs) {
     if (colDog === dogState) continue;
-    // creating a collision box for the dogs using the base torso scale!
+    // creating a collision box for the dogs using the base torso scale! + tail!
+    const dogTailLengthA = dogState.scale * dogParts[1].scale[2];
     const dogWidthA = dogState.scale * dogParts[0].scale[0];
-    const dogDepthA = dogState.scale * dogParts[0].scale[2];
+    const dogDepthA = dogState.scale * dogParts[0].scale[2] + dogTailLengthA;
+    const dogTailLengthB = colDog.scale * dogParts[1].scale[2];
     const dogWidthB = colDog.scale * dogParts[0].scale[0];
-    const dogDepthB = colDog.scale * dogParts[0].scale[2];
+    const dogDepthB = colDog.scale * dogParts[0].scale[2] + dogTailLengthB;
     const dx = Math.abs(dogState.pos[0] - colDog.pos[0]);
     const dz = Math.abs(dogState.pos[2] - colDog.pos[2]);
     if (dx < (dogWidthA + dogWidthB) / 2 && dz < (dogDepthA + dogDepthB) / 2) {
-      dogState.direction += 180 * (Math.PI / 180); // degrees in radians
+      dogState.direction += 180 * (Math.PI / 180); // degrees in radians=
+      const minDistX = (dogWidthA + dogWidthB) / 2;
+      const minDistZ = (dogDepthA + dogDepthB) / 2;
+      // nudge dog outside the collision dog if they get stuck :\ 
+      if (dx < minDistX) {
+        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + 0.01);
+      }
+      if (dz < minDistZ) {
+        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + 0.01);
+      }
       break;
     }
   }
@@ -517,18 +558,28 @@ function updatePosition(dogState, time, badAction) {
     const dz = Math.abs(dogState.pos[2] - tree.tZ);
     if (dx < treeWidth / 2 && dz < treeDepth / 2) {
       dogState.direction += 180 * (Math.PI / 180); // rotate 45 degrees!
+      // nudge dog outside the tree if they get stuck :\
+      if (Math.abs(dx) < treeWidth / 2) {
+        dogState.pos[0] = tree.tX + Math.sign(dx) * (treeWidth / 2 + 0.01);
+      }
+      if (Math.abs(dz) < treeDepth / 2) {
+        dogState.pos[2] = tree.tZ + Math.sign(dz) * (treeDepth / 2 + 0.01);
+      }
       break;
     }
   }
 }
 
 
+let timeSceneStarted = 0;
 function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDog) {
   const time = performance.now() / 1000;
 
-  // intermittent bad actions
+  // intermittent bad actions (TODO: make bad actions object with anim functions like dog parts!)
   let badActionInProgress = null;
-  if (time > 9 && badAction && time % 10 < 5 && badAction !== 'speed') {
+  // TODO: add proper modTime
+  const secondsBetween = badAction === 'tailChase' ? 10 : 15;
+  if (time - timeSceneStarted > secondsBetween - 1 && badAction && time % secondsBetween < 5 && badAction !== 'speed') {
     badActionInProgress = badAction;
   } else if (badAction === 'speed') {
     // ongoing bad actions
@@ -593,7 +644,7 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
     partMatrix = m4.translate(partMatrix, offset[0], offset[1], offset[2]);
 
     // add part-specific animation if needed (speed has normal animation)
-    if (part.anim && (!badActionInProgress || badActionInProgress === 'speed')) {
+    if (part.anim && (!badActionInProgress || badActionInProgress === 'speed' || (badActionInProgress === 'jump' && !part.name.includes('leg')))) {
       partMatrix = part.anim(time, partMatrix);
     }
 
@@ -692,6 +743,8 @@ const dogState = {
   scale: 0.5,
   // how fast per second
   speed: 15, // 5 seems to be pragmatic
+  // for jumping!
+  velocity: null,
   // how far they can go
   bounds: { x: [-8, 8], z: [-18, -2] },
   floppy: false,
@@ -791,7 +844,7 @@ const breeds = {
 
 function generateBaseDog(inputBreedName, inputX, inputZ) {
   const breedName = inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
-  const breed = breeds[breedName];
+  const breed = {...breeds[breedName]};
   if (breed.wholeColor && Array.isArray(breed.wholeColor[0])) {
     breed.wholeColor = breed.wholeColor[Math.floor(Math.random() * breed.wholeColor.length)];
   }
@@ -830,15 +883,15 @@ let photoDialog = '';
 let caughtDogBlob = null;
 
 /* game logic! */
-const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Morgan", "Sadie", "Wilson", "Rufus", "Sargent", "Floss", "Deemo", "Cecil", "Lloyd", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy"].slice().sort(() => Math.random() - 0.5);
+const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Morgan", "Sadie", "Wilson", "Rufus", "Sargent", "Floss", "Deemo", "Cecil", "Lloyd", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy", "Beau"].slice().sort(() => Math.random() - 0.5);
 let missionIndex = 0;
-const badActions = ['tailChase', 'speed']
+const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
   {
     // maybe make this a german shepherd?
-    targetBreed: 'lab',
+    targetBreed: 'german',
     badAction: 'tailChase',
-    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie'],
+    otherDogBreeds: ['lab',],
     otherDogCount: 6,
     text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
     redHerringCount: 0,
@@ -850,8 +903,25 @@ const missions = [
     otherDogCount: 10,
     text: 'Please take a picture of the dog running at full speed. It is very distracting!',
     redHerringCount: 1,
+  },
+  {
+    targetBreed: null,
+    badAction: 'jump',
+    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 20,
+    text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
+    redHerringCount: 2,
+  },
+  {
+    targetBreed: 'westie',
+    badAction: 'doughnut',
+    otherDogBreeds: ['westie'],
+    otherDogCount: 30,
+    text: 'Please take a picture of who stole my doughnut. Make sure you get it\'s face!',
+    redHerringCount: 4,
   }
 ]
+
 // fill instructions with initial mission text
 const missionText = document.getElementById('mission-text')
 missionText.textContent = missions[missionIndex].text
@@ -906,7 +976,7 @@ function render3D(time = 0) {
   // make the bad dog >:) 
   badDog = badDog ?? generateBaseDog(currentMission.targetBreed);
   const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction, true);
-  allDogs.push({ mvp: badDogMvp, ...badDog, dogName: allDogNames[startIndex], isBad: true });
+  allDogs.push({ mvp: badDogMvp, ...badDog, dogName: allDogNames[startIndex], isBad: true, badAction: currentMission.badAction });
 
   // make the other dogs!
   otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds);
@@ -915,7 +985,7 @@ function render3D(time = 0) {
     let redHerringAction = null;
     if (currentMission.redHerringCount && i < currentMission.redHerringCount) {
       // give the dog a badAction!
-      redHerringAction = badActions[0];
+      redHerringAction = redHerringActions[i % redHerringActions.length];
     }
     let dogMvp = drawDog(gl, programInfo, projection, view, dog, redHerringAction, false);
     allDogs.push({ mvp: dogMvp, ...dog, dogName: allDogNames[startIndex + i + 1], isBad: false });

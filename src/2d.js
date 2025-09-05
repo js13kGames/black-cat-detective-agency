@@ -460,6 +460,7 @@ function renderNextMission() {
     zoomAmount = 0;
     badDog = null;
     otherDogs = null;
+    timeSceneStarted = performance.now() / 1000;
   }
 }
 
