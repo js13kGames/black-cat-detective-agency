@@ -590,7 +590,7 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
   const secondsBetween = badAction === 'tailChase' ? 10 : 15;
   if (time - timeSceneStarted > secondsBetween - 1 && badAction && time % secondsBetween < 5 && badAction !== 'speed') {
     badActionInProgress = badAction;
-  } else if (badAction === 'speed') {
+  } else if (badAction === 'speed' || badAction === 'hotdog') {
     // ongoing bad actions
     badActionInProgress = badAction;
   }
@@ -952,7 +952,7 @@ const breeds = {
 };
 
 function generateBaseDog(inputBreedName, inputX, inputZ) {
-  const breedName = inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
+  const breedName = Array.isArray(inputBreedName) ? inputBreedName[Math.floor(Math.random() * inputBreedName.length)] : inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
   const breed = { ...breeds[breedName] };
   if (breed.wholeColor && Array.isArray(breed.wholeColor[0])) {
     breed.wholeColor = breed.wholeColor[Math.floor(Math.random() * breed.wholeColor.length)];
@@ -997,21 +997,21 @@ let photoDialog = '';
 let caughtDogBlob = null;
 
 /* game logic! */
-const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "Plankley", 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', "Milky", 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Wilsen", "Rufuss", "Sargent", "Floss", "Deemo", "Cecil", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy", "Beau", "Moop", "Nes", "Maple", "Finnegan", "Zilly", "Panini", "Will", "Anne", "Colleen", "Aristotle", "Fish", "Eleanor", "Beth", "Gingerbread", "Weasel", "Pickles", "Avril", "Chaise", "Cameo", "Darby", "Garry", "Mona", "Pascal", "Shirley", "Tony", "Thisbe", "Spaghetti", "Tosha", "Kyler", "Sonny", "Nancy", "Ocean", "Hazelnut", "Nil", "Shelby", "Jocinda", "Meadow", "Clark", "Claire",].slice().sort(() => Math.random() - 0.5);
+const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "Plankley", 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', "Milky", 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Wilsen", "Rufuss", "Sargent", "Floss", "Deemo", "Cecil", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy", "Beau", "Moop", "Nes", "Maple", "Finnegan", "Zilly", "Panini", "Will", "Anne", "Colleen", "Aristotle", "Fish", "Eleanor", "Beth", "Gingerbread", "Weasel", "Pickles", "Avril", "Chaise", "Cameo", "Darby", "Garry", "Mona", "Pascal", "Shirley", "Tony", "Thisbe", "Spaghetti", "Tosha", "Kyler", "Sonny", "Nancy", "Ocean", "Hazelnut", "Nil", "Shelby", "Jocinda", "Meadow", "Clark", "Claire", "Bambina", "McCleskey"].slice().sort(() => Math.random() - 0.5);
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  // {
-  //   // test mission!!
-  //   targetBreed: null,
-  //   badAction: 'speed',
-  //   otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
-  //   otherDogCount: 6,
-  //   text: 'Test Mission!',
-  //   redHerringCount: 0,
-  // },
   {
-    targetBreed: 'german',
+    // test mission!!
+    targetBreed: ['german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
+    badAction: 'tailChase',
+    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 1,
+    text: 'Test Mission!',
+    redHerringCount: 0,
+  },
+  {
+    targetBreed: ['german', 'pug', 'westie'],
     badAction: 'tailChase',
     otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
     otherDogCount: 6,
@@ -1035,7 +1035,7 @@ const missions = [
     redHerringCount: 2,
   },
   {
-    targetBreed: null,
+    targetBreed: ['german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
     badAction: 'hotdog',
     otherDogBreeds: ['dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
     otherDogCount: 30,
@@ -1188,12 +1188,7 @@ function render3D(time = 0) {
         document.exitPointerLock();
         window.gameState = 5; // + missionIndex
         // caughtDogBlob = blob;
-        photoDialog = `You got the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`
-        document.getElementById('camera-ui').classList.add('hidden');
-        document.getElementById('album').classList.add('hidden');
-        document.getElementById('instructions').classList.add('hidden');
-        canvas.classList.add('hidden');
-        canvas2D.classList.remove('hidden');
+        photoDialog = `You got the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
         dialogOpen = true;
       });
 

@@ -5,11 +5,6 @@ const gameUi = document.getElementById("c");
 cameraUI.classList.add("hidden");
 gameUi.classList.add("hidden");
 
-// TODO: hide game UI
-
-let mainCanvas = document.getElementById("c2");
-let ctx = mainCanvas.getContext("2d");
-
 // TODO: use object colors :)
 const gray = "rgba(218, 215, 215, 1)";
 const clawGray = "rgba(201, 191, 191, 1)";
@@ -27,12 +22,12 @@ function drawBackground() {
   // using the size of the canvas, we can figure out how many boxes to draw
   const boxSize = 25;
   // can also use ctx height too
-  const numBoxesX = Math.ceil(mainCanvas.width / boxSize);
-  const numBoxesY = Math.ceil(mainCanvas.height / boxSize);
+  const numBoxesX = Math.ceil(canvas2D.width / boxSize);
+  const numBoxesY = Math.ceil(canvas2D.height / boxSize);
   for (let i = 0; i < numBoxesX; i++) {
     for (let j = 0; j < numBoxesY; j++) {
-      ctx.fillStyle = (i + j) % 2 === 0 ? white : gray;
-      ctx.fillRect(i * boxSize, j * boxSize, boxSize, boxSize);
+      ctx2D.fillStyle = (i + j) % 2 === 0 ? white : gray;
+      ctx2D.fillRect(i * boxSize, j * boxSize, boxSize, boxSize);
     }
   }
 }
@@ -42,12 +37,12 @@ function drawBackground() {
 let mouseX;
 let mouseY;
 function handleMouseMove(e) {
-  const rect = mainCanvas.getBoundingClientRect();
-  mouseX = (e.clientX - rect.left) * (mainCanvas.width / rect.width);
-  mouseY = (e.clientY - rect.top) * (mainCanvas.height / rect.height);
+  const rect = canvas2D.getBoundingClientRect();
+  mouseX = (e.clientX - rect.left) * (canvas2D.width / rect.width);
+  mouseY = (e.clientY - rect.top) * (canvas2D.height / rect.height);
   let isFilling = false;
   renderedButtons.forEach(button => {
-    if (ctx.isPointInPath(button.path, e.offsetX, e.offsetY)) {
+    if (ctx2D.isPointInPath(button.path, e.offsetX, e.offsetY)) {
       activeButton = button
       isFilling = true;
     }
@@ -62,30 +57,30 @@ function handleMouseMove(e) {
 
 function drawComputer() {
   // draw the computer screen
-  ctx.fillStyle = lightPurple;
-  const computerHeight = mainCanvas.height - 50;
-  const computerWidth = mainCanvas.width - 50;
-  ctx.fillRect(25, 25, computerWidth, computerHeight);
+  ctx2D.fillStyle = lightPurple;
+  const computerHeight = canvas2D.height - 50;
+  const computerWidth = canvas2D.width - 50;
+  ctx2D.fillRect(25, 25, computerWidth, computerHeight);
 
   // draw the toolbar
-  ctx.fillStyle = darkPurple;
-  ctx.fillRect(25, 25, computerWidth, 50);
+  ctx2D.fillStyle = darkPurple;
+  ctx2D.fillRect(25, 25, computerWidth, 50);
 
   // add the title! :)
-  ctx.fillStyle = 'white';
-  ctx.font = "20px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Black Cat Detective Agency", 200, 50);
+  ctx2D.fillStyle = 'white';
+  ctx2D.font = "20px monospace";
+  ctx2D.textAlign = "center";
+  ctx2D.textBaseline = "middle";
+  ctx2D.fillText("Black Cat Detective Agency", 200, 50);
 
   // draw x box
-  ctx.fillStyle = lightPurple;
-  ctx.fillRect(computerWidth - 10, 35, 30, 30);
-  ctx.fillStyle = darkPurple;
-  ctx.font = "20px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("x", computerWidth + 5, 50);
+  ctx2D.fillStyle = lightPurple;
+  ctx2D.fillRect(computerWidth - 10, 35, 30, 30);
+  ctx2D.fillStyle = darkPurple;
+  ctx2D.font = "20px monospace";
+  ctx2D.textAlign = "center";
+  ctx2D.textBaseline = "middle";
+  ctx2D.fillText("x", computerWidth + 5, 50);
 }
 
 function drawButton({ text, onClick, alignment, fontSize = 35 }) {
@@ -93,31 +88,31 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
   const width = (fontSize / 1.5) * text.length;
   const height = fontSize * 1.5;
 
-  let x = (mainCanvas.width - width) / 2;
-  let y = (mainCanvas.height - height) / 2;
+  let x = (canvas2D.width - width) / 2;
+  let y = (canvas2D.height - height) / 2;
   if (alignment === 'left') {
     x = 75;
-    y = mainCanvas.height - height - 50;
+    y = canvas2D.height - height - 70;
   } else if (alignment === 'right') {
-    x = mainCanvas.width - width - 75;
-    y = mainCanvas.height - height - 50;
+    x = canvas2D.width - width - 75;
+    y = canvas2D.height - height - 70;
   }
 
   const button = new Path2D();
   button.rect(x, y, width, height);
-  ctx.fillStyle = darkPurple;
-  ctx.fill(button);
+  ctx2D.fillStyle = darkPurple;
+  ctx2D.fill(button);
   // add the text
-  ctx.fillStyle = 'white';
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `${fontSize}px monospace`;
-  ctx.fillText(text, x + width / 2, y + height / 2);
+  ctx2D.fillStyle = 'white';
+  ctx2D.textAlign = "center";
+  ctx2D.textBaseline = "middle";
+  ctx2D.font = `${fontSize}px monospace`;
+  ctx2D.fillText(text, x + width / 2, y + height / 2);
 
   // add a border
-  ctx.strokeStyle = lighterPurple;
-  ctx.lineWidth = 5;
-  ctx.strokeRect(x, y, width, height);
+  ctx2D.strokeStyle = lighterPurple;
+  ctx2D.lineWidth = 5;
+  ctx2D.strokeRect(x, y, width, height);
 
   return { path: button, x, y, width, height, onClick };
 }
@@ -125,8 +120,8 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
 // https://stackoverflow.com/questions/62270509/javascript-is-it-possible-to-animate-the-fillrect-of-a-shape-in-a-canvas
 function fillButton() {
   if (!activeButton) return;
-  ctx.fillStyle = slime;
-  ctx.fillRect(activeButton.x, activeButton.y + activeButton.height - Math.min(fillNum, activeButton.height), activeButton.width, Math.min(fillNum, activeButton.height));
+  ctx2D.fillStyle = slime;
+  ctx2D.fillRect(activeButton.x, activeButton.y + activeButton.height - Math.min(fillNum, activeButton.height), activeButton.width, Math.min(fillNum, activeButton.height));
   fillNum += activeButton.height * 0.01;
   if (fillNum >= activeButton.height + 25) { // some buffer to let it chill for a sec
     fillNum = 0;
@@ -162,30 +157,30 @@ function drawSpeech(arr) {
     const height = text ? fontSize * 1.5 : photoHeight + photoPadding;
 
     // bubble
-    const x = side === 'right' ? mainCanvas.width - width - 75 : 75;
+    const x = side === 'right' ? canvas2D.width - width - 75 : 75;
     const y = 100 + (50 * index) + (textContainsPhoto ? photoHeight + photoPadding : 0);
     textContainsPhoto = textContainsPhoto || photo ? true : false; // set after applying photo
     const radii = 10;
-    ctx.fillStyle = 'white';
-    ctx.strokeStyle = 'white';
-    ctx.beginPath();
-    ctx.fillRect(x, y, width, height, radii);
+    ctx2D.fillStyle = 'white';
+    ctx2D.strokeStyle = 'white';
+    ctx2D.beginPath();
+    ctx2D.fillRect(x, y, width, height, radii);
 
     // flag
-    ctx.fillStyle = 'white';
+    ctx2D.fillStyle = 'white';
     if (side === 'right') {
       // right side square
-      ctx.fillRect(x + width, y, 7, 7);
+      ctx2D.fillRect(x + width, y, 7, 7);
     } else {
       // left side square
-      ctx.fillRect(x - 7, y, 7, 7);
+      ctx2D.fillRect(x - 7, y, 7, 7);
     }
 
     if (text) {
       // add the text
-      ctx.font = `${fontSize}px monospace`;
-      ctx.fillStyle = darkPurple;
-      ctx.fillText(text, x + width / 2, y + height / 2);
+      ctx2D.font = `${fontSize}px monospace`;
+      ctx2D.fillStyle = darkPurple;
+      ctx2D.fillText(text, x + width / 2, y + height / 2);
     }
     // draw the photo in the speech bubble!!
     if (photo && !dialogImgFinished) {
@@ -233,83 +228,84 @@ function drawScene({ time, textArr, offset, hasPicture }) {
 // x position, y position, width, height
 function drawPaw() {
   const heightOffset = 60; // a little bit higher than the center pad
+  const mouseOffset = -80;
   // if swatCount is high bring out the claws >:) 
   if (swatCount >= 250) {
     // left claws
-    ctx.fillStyle = clawGray;
-    ctx.beginPath();
+    ctx2D.fillStyle = clawGray;
+    ctx2D.beginPath();
     // top center
-    ctx.moveTo(mouseX - 45, mouseY - heightOffset - 100);
+    ctx2D.moveTo(mouseX - 45, mouseY - mouseOffset - heightOffset - 100);
     // bottom left
-    ctx.lineTo(mouseX - 45, mouseY - heightOffset - 45);
+    ctx2D.lineTo(mouseX - 45, mouseY - mouseOffset - heightOffset - 45);
     // bottom right
-    ctx.lineTo(mouseX - 25, mouseY - heightOffset - 45);
-    ctx.closePath();
-    ctx.fill();
+    ctx2D.lineTo(mouseX - 25, mouseY - mouseOffset - heightOffset - 45);
+    ctx2D.closePath();
+    ctx2D.fill();
 
     // left claw
-    ctx.fillStyle = clawGray;
-    ctx.beginPath();
+    ctx2D.fillStyle = clawGray;
+    ctx2D.beginPath();
     // top center
-    ctx.moveTo(mouseX - 95, mouseY - heightOffset - 50);
+    ctx2D.moveTo(mouseX - 95, mouseY - mouseOffset - heightOffset - 50);
     // bottom left
-    ctx.lineTo(mouseX - 95, mouseY - 75 / 2);
+    ctx2D.lineTo(mouseX - 95, mouseY - mouseOffset - 75 / 2);
     // bottom right
-    ctx.lineTo(mouseX - 75, mouseY - 75 / 2);
-    ctx.closePath();
-    ctx.fill();
+    ctx2D.lineTo(mouseX - 75, mouseY - mouseOffset - 75 / 2);
+    ctx2D.closePath();
+    ctx2D.fill();
 
     // right claws
-    ctx.fillStyle = clawGray;
-    ctx.beginPath();
+    ctx2D.fillStyle = clawGray;
+    ctx2D.beginPath();
     // top center
-    ctx.moveTo(mouseX + 45, mouseY - heightOffset - 100);
+    ctx2D.moveTo(mouseX + 45, mouseY - mouseOffset - heightOffset - 100);
     // bottom left
-    ctx.lineTo(mouseX + 45, mouseY - heightOffset - 45);
+    ctx2D.lineTo(mouseX + 45, mouseY - mouseOffset - heightOffset - 45);
     // bottom right
-    ctx.lineTo(mouseX + 25, mouseY - heightOffset - 45);
-    ctx.closePath();
-    ctx.fill();
+    ctx2D.lineTo(mouseX + 25, mouseY - mouseOffset - heightOffset - 45);
+    ctx2D.closePath();
+    ctx2D.fill();
 
     // right claw
-    ctx.fillStyle = clawGray;
-    ctx.beginPath();
+    ctx2D.fillStyle = clawGray;
+    ctx2D.beginPath();
     // top center
-    ctx.moveTo(mouseX + 95, mouseY - heightOffset - 50);
+    ctx2D.moveTo(mouseX + 95, mouseY - mouseOffset - heightOffset - 50);
     // bottom left
-    ctx.lineTo(mouseX + 95, mouseY - 75 / 2);
+    ctx2D.lineTo(mouseX + 95, mouseY - mouseOffset - 75 / 2);
     // bottom right
-    ctx.lineTo(mouseX + 75, mouseY - 75 / 2);
-    ctx.closePath();
-    ctx.fill();
+    ctx2D.lineTo(mouseX + 75, mouseY - mouseOffset - 75 / 2);
+    ctx2D.closePath();
+    ctx2D.fill();
   }
 
   // this is the arm part- it starts at the bottom!
-  ctx.fillStyle = furBlack;
-  ctx.fillRect(mouseX - 100, mouseY - heightOffset, 200, mainCanvas.height - (mouseY - heightOffset));
+  ctx2D.fillStyle = furBlack;
+  ctx2D.fillRect(mouseX - 100, mouseY - mouseOffset - heightOffset, 200, canvas2D.height - (mouseY - mouseOffset - heightOffset));
 
   // this is the paw (one bigger box)
-  ctx.fillStyle = furBlack;
-  ctx.fillRect(mouseX - 70, mouseY - heightOffset - 45, 140, 100);
+  ctx2D.fillStyle = furBlack;
+  ctx2D.fillRect(mouseX - 70, mouseY - mouseOffset - heightOffset - 45, 140, 100);
 
   // this is the center paw pad
-  ctx.fillStyle = pawPink;
+  ctx2D.fillStyle = pawPink;
   const centerPadSize = 75;
   const centerXPos = mouseX - centerPadSize / 2;
-  const centerYPos = mouseY - centerPadSize / 2;
-  ctx.fillRect(centerXPos, centerYPos - 15, centerPadSize, centerPadSize);
+  const centerYPos = mouseY - mouseOffset - centerPadSize / 2;
+  ctx2D.fillRect(centerXPos, centerYPos - 15, centerPadSize, centerPadSize);
 
   // this is the rest of the paw pads
   const littlePadSize = 35;
-  ctx.fillStyle = pawPink;
+  ctx2D.fillStyle = pawPink;
   // left middle pad
-  ctx.fillRect(centerXPos - littlePadSize - 8, centerYPos + littlePadSize - 50, littlePadSize, littlePadSize);
+  ctx2D.fillRect(centerXPos - littlePadSize - 8, centerYPos + littlePadSize - 50, littlePadSize, littlePadSize);
   // left right pad
-  ctx.fillRect(centerXPos + centerPadSize + 8, centerYPos + littlePadSize - 50, littlePadSize, littlePadSize);
+  ctx2D.fillRect(centerXPos + centerPadSize + 8, centerYPos + littlePadSize - 50, littlePadSize, littlePadSize);
   // top left pad
-  ctx.fillRect(mouseX - 45, mouseY - heightOffset - 35, littlePadSize, littlePadSize);
+  ctx2D.fillRect(mouseX - 45, mouseY - mouseOffset - heightOffset - 35, littlePadSize, littlePadSize);
   // top right pad
-  ctx.fillRect(mouseX + 10, mouseY - heightOffset - 35, littlePadSize, littlePadSize);
+  ctx2D.fillRect(mouseX + 10, mouseY - mouseOffset - heightOffset - 35, littlePadSize, littlePadSize);
 
 }
 
@@ -334,72 +330,72 @@ function drawMouse() {
 
   if (isCollidingWithMouse) {
     // clamp to inside of the browser window
-    mousePosition.x = mouseX > 150 && mouseX < mainCanvas.width - 150 ? mouseX : mousePosition.x;
-    mousePosition.y = mouseY > 150 && mouseY < mainCanvas.height - 150 ? mouseY : mousePosition.y;
+    mousePosition.x = mouseX > 150 && mouseX < canvas2D.width - 150 ? mouseX : mousePosition.x;
+    mousePosition.y = mouseY > 150 && mouseY < canvas2D.height - 150 ? mouseY : mousePosition.y;
     // update the angle the mouse is facing
     // https://stackoverflow.com/questions/33449101/rotate-a-div-towards-the-direction-of-the-mouse-using-atan2
     mousePosition.angle = Math.atan2(mouseY - 200, mouseX - 250) * 180 / Math.PI;
   }
 
   // save context and apply transform
-  ctx.save();
+  ctx2D.save();
   // this will translate the context to where the mouse is so the following shapes are drawn in the right place
-  ctx.translate(mousePosition.x, mousePosition.y);
-  ctx.rotate((mousePosition.angle * Math.PI) / 180);
-  ctx.scale(2, 2);
+  ctx2D.translate(mousePosition.x, mousePosition.y);
+  ctx2D.rotate((mousePosition.angle * Math.PI) / 180);
+  ctx2D.scale(2, 2);
 
 
   // draw mouse at starting place
   // fun fact i'm using the same raindrop shape that I used in my first js13k game!! :) :) :) 
-  ctx.fillStyle = mouseGray;
-  ctx.beginPath();
-  ctx.moveTo(-20, 0);
-  ctx.lineTo(0, -40);
-  ctx.lineTo(20, 0);
-  ctx.arc(0, 0, 20, 50, Math.PI);
-  ctx.closePath();
-  ctx.fill();
+  ctx2D.fillStyle = mouseGray;
+  ctx2D.beginPath();
+  ctx2D.moveTo(-20, 0);
+  ctx2D.lineTo(0, -40);
+  ctx2D.lineTo(20, 0);
+  ctx2D.arc(0, 0, 20, 50, Math.PI);
+  ctx2D.closePath();
+  ctx2D.fill();
 
   // add ears
-  ctx.fillStyle = mouseGray;
+  ctx2D.fillStyle = mouseGray;
   const size = 10;
-  ctx.beginPath();
-  ctx.arc(-15, -15, size, 0, Math.PI * 2);
-  ctx.fill();
+  ctx2D.beginPath();
+  ctx2D.arc(-15, -15, size, 0, Math.PI * 2);
+  ctx2D.fill();
 
-  ctx.beginPath();
-  ctx.arc(15, -15, size, 0, Math.PI * 2);
-  ctx.fill();
+  ctx2D.beginPath();
+  ctx2D.arc(15, -15, size, 0, Math.PI * 2);
+  ctx2D.fill();
 
   // nose
-  ctx.fillStyle = furBlack;
-  ctx.beginPath();
-  ctx.arc(0, -40, 2, 0, Math.PI * 2);
-  ctx.fill();
+  ctx2D.fillStyle = furBlack;
+  ctx2D.beginPath();
+  ctx2D.arc(0, -40, 2, 0, Math.PI * 2);
+  ctx2D.fill();
 
   // tail
-  ctx.strokeStyle = mouseGray;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, 20);
-  ctx.bezierCurveTo(
+  ctx2D.strokeStyle = mouseGray;
+  ctx2D.lineWidth = 3;
+  ctx2D.beginPath();
+  ctx2D.moveTo(0, 20);
+  ctx2D.bezierCurveTo(
     10, 40,
     -30, 60,
     -10, 80
   );
-  ctx.stroke();
+  ctx2D.stroke();
   // reset the context transform
-  ctx.restore();
+  ctx2D.restore();
 }
 
 // resize the canvas
 function resize() {
   // reset dialog image state
   dialogImgFinished = false;
-  window.webglUtils.resizeCanvasToDisplaySize(mainCanvas, 1);
+  window.webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
   mousePosition = {
     x: 200,
-    y: mainCanvas.height - 200,
+    y: canvas2D.height - 200,
     angle: 45,
   }
 }
@@ -407,7 +403,8 @@ function resize() {
 let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
-window.gameState = 4; // 0;
+// debug scene gamestate 
+window.gameState = 0;
 let reply = true;
 let start = null;
 
@@ -454,57 +451,90 @@ let arr3 = [{ text: 'i need you to find my missing person', side: 'right' }, { t
 
 function renderNextMission() {
   return function () {
+    // start transition from 2d to 3d
+    canvas2D.classList.remove('show');
+    transitionOffset = 0;
+    isStartingGame = true;
+
+
+    // set up the next scene by resetting 3d properties
     window.gameState = 4;
     missionIndex++;
-    missionText.textContent = (missions[missionIndex].text);
+    missionText.textContent = missions[missionIndex].text;
     zoomAmount = 0;
     badDog = null;
     otherDogs = null;
     timeSceneStarted = performance.now() / 1000;
-    targetObject.mvp = null;
   }
 }
 
 function render(time) {
-  ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+  ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
   drawBackground();
 
   if (isStartingGame) {
     transitionOffset += 40;
-    if (transitionOffset > mainCanvas.width) {
-      renderedButtons = [];
-      isStartingGame = false;
-      transitionOffset = 0;
-      window.gameState = 1;
-      startReplyTimer(time);
+    if (transitionOffset > canvas2D.width) {
+      canvas2D.classList.add("hide");
+      setTimeout(() => {
+        canvas2D.classList.remove("hide");
+        renderedButtons = [];
+        isStartingGame = false;
+        transitionOffset = 0;
+        window.gameState = 1;
+        startReplyTimer(time);
+      }, 500);
     }
   }
 
-  // returning back to the 3d view
+  // gamestate 4 is the transition state to 3d
   if (window.gameState === 4) {
     transitionOffset += 40;
-    if (transitionOffset > mainCanvas.width) {
-      mainCanvas.classList.add("hidden");
-      gameUi.classList.remove("hidden");
-      document.getElementById('instructions').classList.remove('hidden');
+    if (transitionOffset > canvas2D.width) {
+      canvas2D.classList.add("hide");
+      setTimeout(() => {
+        canvas2D.classList.add("hidden");
+      }, 500);
+      
+      setTimeout(() => {
+        gameUi.classList.remove('hide');
+        gameUi.classList.remove('hidden');
+        gameUi.classList.add('show');
+        document.getElementById('instructions').classList.add('show');
+        document.getElementById('instructions').classList.remove('hidden');
+      }, 500);
     }
   }
 
   // dialog state!
   if (window.gameState === 5) { // >= 5
+    // hide the 3d canvas
+    document.getElementById('camera-ui').classList.add('hidden');
+    document.getElementById('album').classList.add('hidden');
+    document.getElementById('instructions').classList.add('hidden');
+    canvas.classList.add('hidden');
+  
+    // show the 2d
+    canvas2D.classList.remove('hidden');
+    canvas2D.classList.add('show');
+    setTimeout(() => {
+      canvas2D.classList.remove('hide');
+    }, 100);
+
     if (dialogTransitionOffset === null) {
-      dialogTransitionOffset = mainCanvas.width;
+      dialogTransitionOffset = canvas2D.width;
       startReplyTimer(time);
     }
     dialogTransitionOffset -= 40;
     if (dialogTransitionOffset > 0) {
-      ctx.save();
-      ctx.translate(dialogTransitionOffset, 0);
+      ctx2D.save();
+      ctx2D.translate(dialogTransitionOffset, 0);
       drawScene({ textArr: [] });
-      ctx.restore();
+      ctx2D.restore();
     } else {
       handleReplyTimer(time, 3);
 
+      // nextMissionDialog
       let missionComplete1Arr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another dog!', side: 'left' }];
       drawScene({ time, textArr: missionComplete1Arr, offset: 0, hasPicture: true });
       dialogTransitionOffset = 0;
@@ -518,20 +548,19 @@ function render(time) {
     dialogTransitionOffset = null;
   }
 
+  // start
   if (window.gameState === 0) {
-    // if (transitionOffset === null) {
-    //   transitionOffset = mainCanvas.width;
-    // }
-    // transitionOffset -= 40;
-    // if (transitionOffset > 0) {
-    //   ctx.save();
-    //   ctx.translate(transitionOffset, 0);
-    //   drawStart();
-    //   ctx.restore();
-    // } else {
-    drawStart();
-    //   transitionOffset = 0;
-    // }
+    if (transitionOffset === null) {
+      transitionOffset = 0;
+    }
+    if (transitionOffset > 0) {
+      ctx2D.save();
+      ctx2D.translate(transitionOffset, 0);
+      drawStart();
+      ctx2D.restore();
+    } else {
+      drawStart();
+    }
   } else if (window.gameState === 1) {
     handleReplyTimer(time, arr1.length);
     drawScene({
@@ -560,8 +589,8 @@ function render(time) {
     }
   } else if (window.gameState === 3 || window.gameState === 4) {
     handleReplyTimer(time, arr3.length);
-    ctx.save();
-    ctx.translate(transitionOffset, 0);
+    ctx2D.save();
+    ctx2D.translate(transitionOffset, 0);
     drawScene({
       time,
       textArr: [...arr1, ...arr2, ...arr3],
@@ -573,7 +602,7 @@ function render(time) {
         drawButton({ text: 'can you do that for me?', fontSize: 35, onClick: renderNextScene(4), alignment: 'right' })
       ];
     }
-    ctx.restore();
+    ctx2D.restore();
   }
 
   fillButton();
