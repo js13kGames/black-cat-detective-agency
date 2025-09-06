@@ -404,7 +404,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-window.gameState = 0;
+window.gameState = 4; // 0;
 let reply = true;
 let start = null;
 

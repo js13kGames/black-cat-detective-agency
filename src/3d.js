@@ -615,6 +615,9 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
       continue; // tongue goes in mouth
     }
 
+    const partColor = dogState.partColors[part.name] ? dogState.partColors[part.name] :
+      part.name !== 'tongue' && part.name !== 'nose' ? dogState.wholeColor || part.color || colors.default : part.color || colors.default;
+
     // global scaling/transforming that everything will inherit
     if (part.name === 'torso') {
       partMatrix = m4.translate(partMatrix, dogState.pos[0], dogState.pos[1], dogState.pos[2]);
@@ -622,9 +625,12 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
       partMatrix = m4.scale(partMatrix, dogState.scale, dogState.scale, dogState.scale);
     }
 
+    let floppyColorOverride = null;
     if (dogState.floppy && (part.name === 'earL' || part.name === 'earR')) {
       const earX = part.name === 'earL' ? -0.69 : 0.69;
       offset = [earX, 0.5 * dogState.scale, -0.4 * dogState.scale];
+      // make floppy ears a little bit darker so they stand out
+      floppyColorOverride = [partColor[0] - 15 / 255, partColor[1] - 15 / 255, partColor[2] - 15 / 255, 1.0];
     }
 
     // for any breed-specific modifications!
@@ -680,8 +686,6 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
 
     // need to update worlds arr so the parent transforms are applied
     world[i] = partMatrix;
-    const partColor = dogState.partColors[part.name] ? dogState.partColors[part.name] :
-      part.name !== 'tongue' && part.name !== 'nose' ? dogState.wholeColor || part.color || colors.default : part.color || colors.default;
     let obj = drawObject({
       gl,
       projection,
@@ -694,7 +698,7 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
       sX: modifiedScale[0] || part.scale[0],
       sY: modifiedScale[1] || part.scale[1],
       sZ: modifiedScale[2] || part.scale[2],
-      color: partColor
+      color: floppyColorOverride || partColor
     });
 
     if (part.name === 'torso') {
@@ -830,6 +834,7 @@ const colors = {
   yellow: [255 / 255, 255 / 255, 0, 1],
   white: [255 / 255, 255 / 255, 255 / 255, 1],
   lightBrown: [203 / 255, 167 / 255, 121 / 255, 1],
+  lightTan: [253 / 255, 233 / 245, 207 / 232, 1],
   golden: [245 / 255, 204 / 255, 127 / 255, 1],
   blue: [68 / 255, 100 / 255, 159 / 255, 1],
   redBrown: [132 / 255, 41 / 255, 17 / 255, 1],
@@ -888,13 +893,23 @@ const breeds = {
     breedName: "Labrador Retriever",
     scale: 0.45,
     floppy: true,
-    wholeColor: [colors.golden, colors.tawny, colors.darkGray],
+    wholeColor: [colors.lightTan, colors.tawny, colors.darkGray],
+  },
+  golden: {
+    ...dogState,
+    breedName: "Golden Retriever",
+    scale: 0.42,
+    floppy: true,
+    wholeColor: colors.golden,
   },
   chihuahua: {
     ...dogState,
     breedName: "Chihuahua",
     wholeColor: colors.lightBrown,
-    scale: 0.15
+    scale: 0.15,
+    modifications: {
+      tail: 0.6,
+    }
   },
   chow: {
     ...dogState,
@@ -927,7 +942,7 @@ const breeds = {
   dachshund: {
     ...dogState,
     breedName: "Dachshund",
-    wholeColor: [colors.tawny, colors.redBrown],
+    wholeColor: [colors.darkGray, colors.redBrown],
     scale: 0.2,
     floppy: true,
     modifications: {
@@ -1003,10 +1018,10 @@ const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
   {
     // test mission!!
-    targetBreed: ['german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
-    badAction: 'tailChase',
-    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-    otherDogCount: 1,
+    targetBreed: ['lab', 'golden', 'dachshund'],
+    badAction: 'hotdog',
+    otherDogBreeds: ['lab', 'golden', 'dachshund'],
+    otherDogCount: 20,
     text: 'Test Mission!',
     redHerringCount: 0,
   },
@@ -1021,7 +1036,7 @@ const missions = [
   {
     targetBreed: null,
     badAction: 'speed',
-    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
     otherDogCount: 10,
     text: 'Please take a picture of the dog running at full speed. It is very distracting!',
     redHerringCount: 1,
@@ -1029,15 +1044,15 @@ const missions = [
   {
     targetBreed: null,
     badAction: 'jump',
-    otherDogBreeds: ['german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
     otherDogCount: 20,
     text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
     redHerringCount: 2,
   },
   {
-    targetBreed: ['german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
+    targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
     badAction: 'hotdog',
-    otherDogBreeds: ['dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
     otherDogCount: 30,
     text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
     redHerringCount: 3,
