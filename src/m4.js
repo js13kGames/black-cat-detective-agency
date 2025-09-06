@@ -544,6 +544,52 @@ function zRotate(m, angleInRadians, dst) {
 }
 
 
+/**
+ * normalizes a vector.
+ * @param {Vector3} v vector to normalize
+ * @param {Vector3} dst optional vector3 to store result
+ * @return {Vector3} dst or new Vector3 if not provided
+ * @memberOf module:webgl-3d-math
+ */
+function normalize(v, dst) {
+  dst = dst || new MatType(3);
+  var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  // make sure we don't divide by 0.
+  if (length > 0.00001) {
+    dst[0] = v[0] / length;
+    dst[1] = v[1] / length;
+    dst[2] = v[2] / length;
+  }
+  return dst;
+}
+
+/**
+ * Computes the dot product of two vectors; assumes both vectors have
+ * three entries.
+ * @param {Vector3} a Operand vector.
+ * @param {Vector3} b Operand vector.
+ * @return {number} dot product
+ * @memberOf module:webgl-3d-math
+ */
+function dot(a, b) {
+  return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
+}
+
+ /**
+ * subtracts 2 vectors3s
+ * @param {Vector3} a a
+ * @param {Vector3} b b
+ * @param {Vector3} dst optional vector3 to store result
+ * @return {Vector3} dst or new Vector3 if not provided
+ * @memberOf module:webgl-3d-math
+ */
+function subtractVectors(a, b, dst) {
+  dst = dst || new MatType(3);
+  dst[0] = a[0] - b[0];
+  dst[1] = a[1] - b[1];
+  dst[2] = a[2] - b[2];
+  return dst;
+}
 
 window.m4 = {
   transformPoint: transformPoint,
@@ -557,5 +603,8 @@ window.m4 = {
   scale: scale,
   inverse: inverse,
   copy: copy,
-  zRotate: zRotate
+  zRotate: zRotate, // was experimenting with rollover, may not need!
+  normalize: normalize,
+  dot: dot,
+  subtractVectors: subtractVectors,
 }

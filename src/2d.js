@@ -461,6 +461,7 @@ function renderNextMission() {
     badDog = null;
     otherDogs = null;
     timeSceneStarted = performance.now() / 1000;
+    targetObject.mvp = null;
   }
 }
 

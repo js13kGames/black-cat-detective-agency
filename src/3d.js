@@ -198,10 +198,10 @@ function isObjectInCamera(mvps, obstacles, view) {
 
     // make sure they aren't too far away
     const dogCam = m4.transformPoint(view, culprit.pos);
-    const dogCamY = -dogCam[2];
+    const dogCamZ = -dogCam[2];
     const fovScale = 1 / Math.tan(fieldOfViewInRadians * 0.5);
     const maxDistance = fovScale / 0.2; // TODO: .2 seems good for now but keep testing
-    const tooFar = dogCamY > maxDistance;
+    const tooFar = dogCamZ > maxDistance;
 
     if (tooFar) {
       if (culprit.isBad) {
@@ -228,16 +228,25 @@ function isObjectInCamera(mvps, obstacles, view) {
         }
 
         // if you did all that, but the dog isn't engaging in the bad action, then they are not the suspect
-        if (culprit.isBad && (!culpritIsMisbehaving && culprit.badAction !== 'doughnut')) { // TODO: have perspective style bad action
+        if (culprit.isBad && (!culpritIsMisbehaving && culprit.badAction !== 'hotdog')) { // TODO: have perspective style bad action
           missReason = `You got the right ${culprit.breedName} but they aren't engaging in the bad action!`;
           continue;
-        } else if (culprit.isBad && culprit.badAction === 'doughnut') {
-          // Use snout position instead of head for facingCamera check
-          console.log('doughnut check');
-          console.log(culprit.direction);
-          const facingCamera = false; // TODO: implement facing camera check
-          if (!facingCamera) {
-            missReason = `You got the right ${culprit.breedName} but they aren't facing the camera!`;
+        } else if (targetObject.mvp && culprit.isBad && culprit.badAction === 'hotdog') {
+          // Ok so I tried a lot of things (hence why the hotdog is its own mvp...) but this seems to be working
+          // first we need to figure out which way the dog based on how it is rotated on the xz plane
+          const forward = [Math.sin(culprit.direction), 0, Math.cos(culprit.direction)];
+          // then we need to figure out the vector from the dog's head to the camera
+          const dogHead = [culprit.pos[0], culprit.pos[1] + 1.5 * culprit.scale, culprit.pos[2] + 2.75 * culprit.scale];
+          // then get the position of the camera (this is translation xyz part of the view matrix)
+          const camPos = [view[12], view[13], view[14]];
+          // get vector from dog head to camera
+          const toCamera = m4.subtractVectors(camPos, dogHead);
+          // finally, get the dot product of the two normalized vectors to see if they are facing each other
+          const fNorm = m4.normalize(forward);
+          const tNorm = m4.normalize(toCamera);
+          const dot = m4.dot(fNorm, tNorm);
+          if (dot < 0.5) {
+            missReason = `You got the right ${culprit.breedName} but the hotdog isn't facing the camera!`;
             continue;
           }
         }
@@ -315,7 +324,7 @@ const blades = generateGrassBlades();
 
 /* Drawing objects... */
 
-
+// this should really be an object...
 const dogParts = [
   {
     name: 'torso',
@@ -481,7 +490,7 @@ function updatePosition(dogState, time, badAction) {
     dogState.direction += 5 * (Math.PI / 180);
   }
   if (badAction === 'speed') {
-    dogState.speed = 50; // TODO: way faster??
+    dogState.speed = 80; // TODO: way faster??
   }
   // dog will only move up and down!
   if (badAction === 'jump') {
@@ -493,7 +502,7 @@ function updatePosition(dogState, time, badAction) {
     }
     dogState.pos[1] += dogState.velocity;
     dogState.velocity -= 0.01;
-     if (dogState.pos[1] > maxJump) {
+    if (dogState.pos[1] > maxJump) {
       dogState.pos[1] = maxJump;
     } else if (dogState.pos[1] <= 0) {
       // no digging dogs
@@ -602,6 +611,10 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
     let partMatrix = part.parent ? m4.copy(world[idx[part.parent]]) : m4.identity();
     let offset = part.offset || [0, 0, 0];
 
+    if (badActionInProgress === 'hotdog' && part.name === 'tongue') {
+      continue; // tongue goes in mouth
+    }
+
     // global scaling/transforming that everything will inherit
     if (part.name === 'torso') {
       partMatrix = m4.translate(partMatrix, dogState.pos[0], dogState.pos[1], dogState.pos[2]);
@@ -644,8 +657,13 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
     partMatrix = m4.translate(partMatrix, offset[0], offset[1], offset[2]);
 
     // add part-specific animation if needed (speed has normal animation)
-    if (part.anim && (!badActionInProgress || badActionInProgress === 'speed' || (badActionInProgress === 'jump' && !part.name.includes('leg')))) {
-      partMatrix = part.anim(time, partMatrix);
+    if (part.anim && (!badActionInProgress || badActionInProgress === 'speed' || (badActionInProgress === 'jump' && !part.name.includes('leg')) || badAction === 'hotdog')) {
+      if (badActionInProgress === 'speed' && part.name.includes('leg')) {
+        // speed up the legs a little
+        partMatrix = part.anim(time * 4, partMatrix);
+      } else {
+        partMatrix = part.anim(time, partMatrix);
+      }
     }
 
     // add bad action mods
@@ -685,6 +703,94 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
   }
   return mvp;
 }
+
+
+function drawHotdog(gl, world, programInfo, projection, view, pos) {
+  const dHeight = 0.25;
+  const dDepth = 0.5;
+  const dWidth = 1.25;
+
+  // Bun (parent)
+  let bunWorld = m4.copy(world);
+  bunWorld = m4.translate(bunWorld, pos[0], pos[1], pos[2]);
+  bunWorld = m4.scale(bunWorld, dWidth, dHeight, dDepth);
+  const bunMvp = drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: bunWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    color: colors.doughBrown
+  });
+
+  // hot dog  (child of bun)
+  let hotdogWorld = m4.copy(bunWorld);
+  hotdogWorld = m4.translate(hotdogWorld, 0, .1, 0);
+  hotdogWorld = m4.scale(hotdogWorld, 1.25, 1, .5);
+  drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: hotdogWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    color: colors.redBrown
+  });
+
+  // mustard (child of bun too)
+  let mustardWorld = m4.copy(bunWorld);
+  mustardWorld = m4.translate(mustardWorld, 0, .6, 0);
+  mustardWorld = m4.scale(mustardWorld, 1.1, .1, .1);
+  drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: mustardWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    color: colors.yellow
+  });
+
+  return bunMvp;
+
+  // was gonna do a dotted line but it looked bad but maybe something for roses? :)
+  // for (let i = 0; i < 4; i++) {
+
+  //   drawObject({
+  //     gl,
+  //     projection,
+  //     programInfo,
+  //     view,
+  //     world: null,
+  //     tX: pos[0],
+  //     tY: pos[1] + 0.01,
+  //     // start at the beginning of the hot dog then move along z axis a bit!
+  //     tZ: pos[2] - dDepth / 2 + (i * (dDepth / 3)),
+  //     sX: 0.005,
+  //     sY: 0.0025,
+  //     sZ: .001,
+  //     color: colors.yellow,
+  //   });
+  // }
+}
+
+
 
 function drawObject({ gl, projection, programInfo, view, world, tX, tY, tZ, sX, sY, sZ, color }) {
   webglUtils.setBuffersAndAttributes(gl, programInfo, cube);
@@ -727,7 +833,10 @@ const colors = {
   golden: [245 / 255, 204 / 255, 127 / 255, 1],
   blue: [68 / 255, 100 / 255, 159 / 255, 1],
   redBrown: [132 / 255, 41 / 255, 17 / 255, 1],
-  tawny: [119 / 255, 68 / 255, 42 / 255, 1]
+  tawny: [119 / 255, 68 / 255, 42 / 255, 1],
+  frostingPink: [255 / 255, 213 / 255, 213 / 255, 1],
+  doughBrown: [242 / 255, 188 / 255, 118 / 255, 1],
+  red: [1, 0, 0, 1],
 };
 
 
@@ -844,7 +953,7 @@ const breeds = {
 
 function generateBaseDog(inputBreedName, inputX, inputZ) {
   const breedName = inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
-  const breed = {...breeds[breedName]};
+  const breed = { ...breeds[breedName] };
   if (breed.wholeColor && Array.isArray(breed.wholeColor[0])) {
     breed.wholeColor = breed.wholeColor[Math.floor(Math.random() * breed.wholeColor.length)];
   }
@@ -875,6 +984,11 @@ let allDogs = []; // go to heaven
 // the big red herrings
 let otherDogs = null;
 let badDog = null;
+let targetObject = {
+  mvp: null,
+  pos: null,
+};
+
 let fieldOfViewInRadians = 60 * Math.PI / 180; // how wide the camera's view is (1.0471975511965976 radians -> 60 degrees)
 
 
@@ -883,15 +997,23 @@ let photoDialog = '';
 let caughtDogBlob = null;
 
 /* game logic! */
-const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Morgan", "Sadie", "Wilson", "Rufus", "Sargent", "Floss", "Deemo", "Cecil", "Lloyd", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy", "Beau"].slice().sort(() => Math.random() - 0.5);
+const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "Plankley", 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', "Milky", 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Wilsen", "Rufuss", "Sargent", "Floss", "Deemo", "Cecil", "Janis", "Charley", "Norman", "Miss Beautiful", "Fiona", "Watson", "Dewy", "Beau", "Moop", "Nes", "Maple", "Finnegan", "Zilly", "Panini", "Will", "Anne", "Colleen", "Aristotle", "Fish", "Eleanor", "Beth", "Gingerbread", "Weasel", "Pickles", "Avril", "Chaise", "Cameo", "Darby", "Garry", "Mona", "Pascal", "Shirley", "Tony", "Thisbe", "Spaghetti", "Tosha", "Kyler", "Sonny", "Nancy", "Ocean", "Hazelnut", "Nil", "Shelby", "Jocinda", "Meadow", "Clark", "Claire",].slice().sort(() => Math.random() - 0.5);
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
+  // {
+  //   // test mission!!
+  //   targetBreed: null,
+  //   badAction: 'speed',
+  //   otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
+  //   otherDogCount: 6,
+  //   text: 'Test Mission!',
+  //   redHerringCount: 0,
+  // },
   {
-    // maybe make this a german shepherd?
     targetBreed: 'german',
     badAction: 'tailChase',
-    otherDogBreeds: ['lab',],
+    otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
     otherDogCount: 6,
     text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
     redHerringCount: 0,
@@ -913,12 +1035,12 @@ const missions = [
     redHerringCount: 2,
   },
   {
-    targetBreed: 'westie',
-    badAction: 'doughnut',
-    otherDogBreeds: ['westie'],
+    targetBreed: null,
+    badAction: 'hotdog',
+    otherDogBreeds: ['dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
     otherDogCount: 30,
-    text: 'Please take a picture of who stole my doughnut. Make sure you get it\'s face!',
-    redHerringCount: 4,
+    text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
+    redHerringCount: 3,
   }
 ]
 
@@ -970,13 +1092,33 @@ function render3D(time = 0) {
 
   drawGround(gl, view, projection);
 
-
   let prevMission = missions[missionIndex - 1];
   let startIndex = prevMission ? prevMission.otherDogCount + 1 : 0;
   // make the bad dog >:) 
   badDog = badDog ?? generateBaseDog(currentMission.targetBreed);
   const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction, true);
   allDogs.push({ mvp: badDogMvp, ...badDog, dogName: allDogNames[startIndex], isBad: true, badAction: currentMission.badAction });
+
+
+  // adding a hot dog for the hot dog mission!
+  if (currentMission.badAction === 'hotdog') {
+    // same animation as head nod!
+    let hotDogMatrix = m4.identity();
+    hotDogMatrix = m4.translate(hotDogMatrix, badDog.pos[0], badDog.pos[1], badDog.pos[2]);
+    hotDogMatrix = m4.yRotate(hotDogMatrix, badDog.direction);
+    // put the hotdog where the tongue is
+    hotDogMatrix = m4.translate(hotDogMatrix, 0, 1.5 * badDog.scale, 2.75 * badDog.scale);
+    hotDogMatrix = m4.scale(hotDogMatrix, badDog.scale, badDog.scale, badDog.scale);
+    // the anim
+    hotDogMatrix = m4.translate(hotDogMatrix, 0, 0.05 * Math.sin(performance.now() / 1000 * 6), 0);
+    hotDogMatrix = m4.xRotate(hotDogMatrix, 0.05 * Math.sin(performance.now() / 1000 * 2));
+    // draw the parts and save the mvp for the frustum test
+    let hotDogMvp = drawHotdog(gl, hotDogMatrix, programInfo, projection, view, [0, 0, 0]);
+    if (!targetObject.mvp) {
+      targetObject = {mvp: hotDogMvp, pos: [badDog.pos[0], badDog.pos[1] + 1.5 * badDog.scale, badDog.pos[2] + 2.75 * badDog.scale]};
+    }
+  }
+
 
   // make the other dogs!
   otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds);
