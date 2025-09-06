@@ -490,7 +490,7 @@ function updatePosition(dogState, time, badAction) {
     dogState.direction += 5 * (Math.PI / 180);
   }
   if (badAction === 'speed') {
-    dogState.speed = 80; // TODO: way faster??
+    dogState.speed = 80;
   }
   // dog will only move up and down!
   if (badAction === 'jump') {
@@ -527,6 +527,11 @@ function updatePosition(dogState, time, badAction) {
   if (dogState.pos[0] < dogState.bounds.x[0] || dogState.pos[0] > dogState.bounds.x[1] ||
     dogState.pos[2] < dogState.bounds.z[0] || dogState.pos[2] > dogState.bounds.z[1]) {
     dogState.direction += 45 * (Math.PI / 180); // degrees in radians
+    // make sure the dog is nudged back in bounds so they don't spin and go cuhrazy TODO: make like tree
+    dogState.pos[0] = dogState.pos[0] < dogState.bounds.x[0] ? dogState.bounds.x[0] + 0.1 : dogState.pos[0]; // dog is out of bounds on the left
+    dogState.pos[0] = dogState.pos[0] > dogState.bounds.x[1] ? dogState.bounds.x[1] - 0.1 : dogState.pos[0]; // dog is out of bounds on the right
+    dogState.pos[2] = dogState.pos[2] < dogState.bounds.z[0] ? dogState.bounds.z[0] + 0.1 : dogState.pos[2]; // dog is out of bounds on the top
+    dogState.pos[2] = dogState.pos[2] > dogState.bounds.z[1] ? dogState.bounds.z[1] - 0.1 : dogState.pos[2]; // dog is out of bounds on the bottom
   }
 
   // check for collisions with other dogs by looping through state. 
@@ -544,15 +549,16 @@ function updatePosition(dogState, time, badAction) {
     const dx = Math.abs(dogState.pos[0] - colDog.pos[0]);
     const dz = Math.abs(dogState.pos[2] - colDog.pos[2]);
     if (dx < (dogWidthA + dogWidthB) / 2 && dz < (dogDepthA + dogDepthB) / 2) {
-      dogState.direction += 180 * (Math.PI / 180); // degrees in radians=
+      // turn dog around...
+      dogState.direction += 180 * (Math.PI / 180);
       const minDistX = (dogWidthA + dogWidthB) / 2;
       const minDistZ = (dogDepthA + dogDepthB) / 2;
       // nudge dog outside the collision dog if they get stuck :\ 
       if (dx < minDistX) {
-        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + 0.01);
+        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + 0.1);
       }
       if (dz < minDistZ) {
-        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + 0.01);
+        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + 0.1);
       }
       break;
     }
@@ -565,14 +571,13 @@ function updatePosition(dogState, time, badAction) {
     const treeDepth = 1;
     const dx = Math.abs(dogState.pos[0] - tree.tX);
     const dz = Math.abs(dogState.pos[2] - tree.tZ);
-    if (dx < treeWidth / 2 && dz < treeDepth / 2) {
-      dogState.direction += 180 * (Math.PI / 180); // rotate 45 degrees!
+    if (dx < treeWidth && dz < treeDepth) {      dogState.direction += 180 * (Math.PI / 180); // rotate 45 degrees!
       // nudge dog outside the tree if they get stuck :\
-      if (Math.abs(dx) < treeWidth / 2) {
-        dogState.pos[0] = tree.tX + Math.sign(dx) * (treeWidth / 2 + 0.01);
+      if (Math.abs(dx) < treeWidth) {
+        dogState.pos[0] = tree.tX + Math.sign(dx) * (treeWidth + 0.1);
       }
-      if (Math.abs(dz) < treeDepth / 2) {
-        dogState.pos[2] = tree.tZ + Math.sign(dz) * (treeDepth / 2 + 0.01);
+      if (Math.abs(dz) < treeDepth) {
+        dogState.pos[2] = tree.tZ + Math.sign(dz) * (treeDepth + 0.1);
       }
       break;
     }
@@ -1018,10 +1023,10 @@ const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
   {
     // test mission!!
-    targetBreed: ['lab', 'golden', 'dachshund'],
+    targetBreed: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
     badAction: 'hotdog',
-    otherDogBreeds: ['lab', 'golden', 'dachshund'],
-    otherDogCount: 20,
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+    otherDogCount: 30,
     text: 'Test Mission!',
     redHerringCount: 0,
   },
