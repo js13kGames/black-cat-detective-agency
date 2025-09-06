@@ -71,9 +71,6 @@ let m4 = window.m4;
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl');
 
-// 2d canvas controls
-let canvas2D = document.getElementById("c2");
-let ctx2D = canvas2D.getContext("2d");
 
 // add listener to resize the canvas to fit the window
 function resize3d() {
@@ -538,7 +535,7 @@ function updatePosition(dogState, time, badAction) {
   // if they hit another dog, turn them around!
   // TODO: maybe stop the other dog from moving until the dog is safely placed?
   for (const colDog of allDogs) {
-    if (colDog === dogState) continue;
+    if (colDog.dogName === dogState.dogName) continue;
     // creating a collision box for the dogs using the base torso scale! + tail!
     const dogTailLengthA = dogState.scale * dogParts[1].scale[2];
     const dogWidthA = dogState.scale * dogParts[0].scale[0];
@@ -548,17 +545,21 @@ function updatePosition(dogState, time, badAction) {
     const dogDepthB = colDog.scale * dogParts[0].scale[2] + dogTailLengthB;
     const dx = Math.abs(dogState.pos[0] - colDog.pos[0]);
     const dz = Math.abs(dogState.pos[2] - colDog.pos[2]);
+    let nudgeSize = 0.5;
     if (dx < (dogWidthA + dogWidthB) / 2 && dz < (dogDepthA + dogDepthB) / 2) {
-      // turn dog around...
-      dogState.direction += 180 * (Math.PI / 180);
+      // if (colDog.badAction === 'speed') {
+      //   // make sure the colDog is not on the same path or they will push each other around forever
+      //   nudgeSize = 0.5;
+      // }
+      dogState.direction += 45 * (Math.PI / 180);
       const minDistX = (dogWidthA + dogWidthB) / 2;
       const minDistZ = (dogDepthA + dogDepthB) / 2;
       // nudge dog outside the collision dog if they get stuck :\ 
-      if (dx < minDistX) {
-        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + 0.1);
+      if (dx < minDistX || colDog.badAction === 'speed') {
+        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + nudgeSize);
       }
-      if (dz < minDistZ) {
-        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + 0.1);
+      if (dz < minDistZ || colDog.badAction === 'speed') {
+        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + nudgeSize);
       }
       break;
     }
@@ -569,15 +570,36 @@ function updatePosition(dogState, time, badAction) {
     // Important: adding the width and depth to the collision box!! I think this will work better than setting the dist.
     const treeWidth = 1;
     const treeDepth = 1;
-    const dx = Math.abs(dogState.pos[0] - tree.tX);
-    const dz = Math.abs(dogState.pos[2] - tree.tZ);
-    if (dx < treeWidth && dz < treeDepth) {      dogState.direction += 180 * (Math.PI / 180); // rotate 45 degrees!
+    const dx = dogState.pos[0] - tree.tX;
+    const dz = dogState.pos[2] - tree.tZ;
+    if (Math.abs(dx) < treeWidth && Math.abs(dz) < treeDepth) {     
+      dogState.direction += 100 * (Math.PI / 180); // rotate 90 degrees!
       // nudge dog outside the tree if they get stuck :\
       if (Math.abs(dx) < treeWidth) {
         dogState.pos[0] = tree.tX + Math.sign(dx) * (treeWidth + 0.1);
       }
       if (Math.abs(dz) < treeDepth) {
         dogState.pos[2] = tree.tZ + Math.sign(dz) * (treeDepth + 0.1);
+      }
+      break;
+    }
+  }
+
+  // check for collisions with bushes too
+  for (const bush of bushes) {
+    // Important: adding the width and depth to the collision box!! I think this will work better than setting the dist.
+    const bushWidth = 1;
+    const bushDepth = 1;
+    const dx = dogState.pos[0] - bush.tX;
+    const dz = dogState.pos[2] - bush.tZ;
+    if (Math.abs(dx) < bushWidth && Math.abs(dz) < bushDepth) {
+      dogState.direction += 100 * (Math.PI / 180); // rotate 90 degrees!
+      // nudge dog outside the bush if they get stuck :\
+      if (Math.abs(dx) < bushWidth) {
+        dogState.pos[0] = bush.tX + Math.sign(dx) * (bushWidth + 0.1);
+      }
+      if (Math.abs(dz) < bushDepth) {
+        dogState.pos[2] = bush.tZ + Math.sign(dz) * (bushDepth + 0.1);
       }
       break;
     }
@@ -713,6 +735,72 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
   return mvp;
 }
 
+function drawRoseBush(gl, world, programInfo, projection, view, pos, roseColor) {
+  let bushWorld = m4.copy(world);
+  bushWorld = m4.translate(bushWorld, pos[0], pos[1], pos[2]);
+  bushWorld = m4.scale(bushWorld, 1, 1, 1);
+  const bushMvp = drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: bushWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    color: colors.ivyGreen
+  });
+
+  // drawRoses
+  const rosePos = [
+    // x, y, z
+    [0, -0.1, .10], // x
+    [.12, 0.1, 0], // z
+    [0, -0.25, .25], // x
+    [-.3, -0.3, 0], // z
+    [0, 0.1, -.3], // x
+    [.25, 0.4, 0], // z
+    [0, 0.4, -.2], // x
+    [-.1, 0.3, 0], // z
+    [0, 0.3, .1], // x
+    [-.15, 0.1, -0], // z
+    [0, -0.4, -.4], // x
+    [.4, -.4, -0], // z
+  ];
+  for (let i = 0; i < rosePos.length; i++) {
+    let roseWorld = m4.copy(bushWorld);
+    // alternate between x and z
+    let scaleX = 0.1;
+    let scaleZ = 0.1;
+    if (i % 2 === 0) { // even
+      scaleX = 1.1;
+    } else { // odd
+      scaleZ = 1.1;
+    }
+    roseWorld = m4.translate(roseWorld, rosePos[i][0], rosePos[i][1], rosePos[i][2]);
+    roseWorld = m4.scale(roseWorld, scaleX, 0.1, scaleZ);
+
+    drawObject({
+      gl,
+      projection,
+      programInfo,
+      view,
+      world: roseWorld,
+      tX: 0,
+      tY: 0,
+      tZ: 0,
+      sX: 1,
+      sY: 1,
+      sZ: 1,
+      color: roseColor
+    });
+  }
+  return bushMvp;
+};
+
 
 function drawHotdog(gl, world, programInfo, projection, view, pos) {
   const dHeight = 0.25;
@@ -847,6 +935,9 @@ const colors = {
   frostingPink: [255 / 255, 213 / 255, 213 / 255, 1],
   doughBrown: [242 / 255, 188 / 255, 118 / 255, 1],
   red: [1, 0, 0, 1],
+  ivyGreen: [75 / 255, 96 / 255, 61 / 255, 1],
+  roseRed: [190 / 255, 30 / 255, 45 / 255, 1],
+  rosePink: [255 / 255, 105 / 255, 180 / 255, 1],
 };
 
 
@@ -971,7 +1062,7 @@ const breeds = {
   }
 };
 
-function generateBaseDog(inputBreedName, inputX, inputZ) {
+function generateBaseDog(inputBreedName, nameIndex, inputX, inputZ) {
   const breedName = Array.isArray(inputBreedName) ? inputBreedName[Math.floor(Math.random() * inputBreedName.length)] : inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
   const breed = { ...breeds[breedName] };
   if (breed.wholeColor && Array.isArray(breed.wholeColor[0])) {
@@ -981,24 +1072,48 @@ function generateBaseDog(inputBreedName, inputX, inputZ) {
   const z = inputZ || Math.random() * 40 - 20;
   const pos = [x, 0, z];
   const direction = Math.random() * Math.PI * 2;
-  const bounds = { x: [x - 10, x + 10], z: [z - 10, z + 10] };
-  return { ...breed, breed: breedName, pos, direction, bounds };
+  const bounds = { x: [-36.5, 36.5], z: [-36.5, 36.5] };
+
+  return { ...breed, breed: breedName, pos, direction, bounds, dogName: allDogNames[nameIndex] };
 }
 
 // add optional breed
-function generateDogs(numDogs, breedNames) {
+function generateDogs(numDogs, breedNames, startIndex) {
   let dogs = [];
   for (let i = 0; i < numDogs; i++) {
     // will loop through breeds so we have a good variety but not too much of one!
-    const baseDog = generateBaseDog(breedNames ? breedNames[i % breedNames.length] : null);
+    const baseDog = generateBaseDog(breedNames ? breedNames[i % breedNames.length] : null, startIndex + i);
     dogs.push({ ...baseDog });
   }
   return dogs;
 }
 
 // honestly this is the perfect tree placement, i don't care!!! i'm hardcoding the trees.
-const trees = [{ "tX": 36.142694635357486, "tZ": -3.545476247494409 }, { "tX": 21.856144769778417, "tZ": 8.298783160206147 }, { "tX": 35.72049816591068, "tZ": 22.75820088691891 }, { "tX": 8.619242878374369, "tZ": 25.25120024719197 }, { "tX": 1.9124314996793903, "tZ": 15.909405556107927 }, { "tX": -7.482670261388316, "tZ": 8.40875699368847 }, { "tX": -23.11830527007823, "tZ": 21.333714555520423 }, { "tX": -13.75073633147762, "tZ": -0.3246181792727388 }, { "tX": -12.926507929017301, "tZ": -8.615623261375035 }, { "tX": -21.865522647638176, "tZ": -3.9129049431434475 }, { "tX": -17.57745271439918, "tZ": -39.96293997352651 }, { "tX": -7.188055319468841, "tZ": -41.156059282588856 }, { "tX": 1.3824453543403066, "tZ": -32.105617385257716 }, { "tX": 23.710262253179298, "tZ": -17.971856046316784 }, { "tX": 17.52771565399987, "tZ": -7.436125847176054 }]
-
+const trees = [
+  { "tX": 34.1, "tZ": -3.5 },
+  { "tX": 21.8, "tZ": 8.2 },
+  { "tX": 34.7, "tZ": 22.7 },
+  { "tX": 7, "tZ": 25.2 },
+  { "tX": 1.9, "tZ": 15.9 },
+  { "tX": -7, "tZ": 8.4 },
+  { "tX": -23.1, "tZ": 21.3 },
+  { "tX": -13.7, "tZ": -0.3 },
+  { "tX": -12.9, "tZ": -8.6 },
+  { "tX": -21.8, "tZ": -3.9 },
+  { "tX": -17.5, "tZ": -32.9 },
+  { "tX": -7.1, "tZ": -30.1 },
+  { "tX": 1.3, "tZ": -29.1 },
+  { "tX": 23.7, "tZ": -17.9 },
+  { "tX": 17.5, "tZ": -7.4 }
+]
+const bushes = [
+  { tX: -7.5, tZ: -17.5 },
+  { tX: 6.8, tZ: -4.1 },
+  { tX: 3, tZ: 8.2 },
+  { tX: -3.9, tZ: 15.7 },
+  { tX: 4.3, tZ: -10.8 },
+  { tX: -7.5, tZ: -5.4 },
+];
 // rendered dogs
 let allDogs = []; // go to heaven
 // the big red herrings
@@ -1024,11 +1139,11 @@ const missions = [
   {
     // test mission!!
     targetBreed: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    badAction: 'hotdog',
+    badAction: 'speed',
     otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    otherDogCount: 30,
+    otherDogCount: 25,
     text: 'Test Mission!',
-    redHerringCount: 0,
+    redHerringCount: 3,
   },
   {
     targetBreed: ['german', 'pug', 'westie'],
@@ -1047,21 +1162,21 @@ const missions = [
     redHerringCount: 1,
   },
   {
-    targetBreed: null,
-    badAction: 'jump',
-    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-    otherDogCount: 20,
-    text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
-    redHerringCount: 2,
-  },
-  {
     targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
     badAction: 'hotdog',
     otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    otherDogCount: 30,
+    otherDogCount: 20,
     text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
     redHerringCount: 3,
-  }
+  },
+  {
+    targetBreed: null,
+    badAction: 'jump',
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 25,
+    text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
+    redHerringCount: 2,
+  },
 ]
 
 // fill instructions with initial mission text
@@ -1110,14 +1225,32 @@ function render3D(time = 0) {
   const farPlane = 100; // the farthest distance we can see
   const projection = m4.perspective(fieldOfViewInRadians, viewportAspect, nearPlane, farPlane);
 
+
+  // draw the ground
   drawGround(gl, view, projection);
+
+  // draw the sun!
+  drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: null,
+    tX: 0,
+    tY: 20,
+    tZ: 0,
+    sX: 4,
+    sY: 4,
+    sZ: 4,
+    color: colors.yellow
+  });
 
   let prevMission = missions[missionIndex - 1];
   let startIndex = prevMission ? prevMission.otherDogCount + 1 : 0;
   // make the bad dog >:) 
-  badDog = badDog ?? generateBaseDog(currentMission.targetBreed);
+  badDog = badDog ?? generateBaseDog(currentMission.targetBreed, startIndex);
   const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction, true);
-  allDogs.push({ mvp: badDogMvp, ...badDog, dogName: allDogNames[startIndex], isBad: true, badAction: currentMission.badAction });
+  allDogs.push({ mvp: badDogMvp, ...badDog, isBad: true, badAction: currentMission.badAction });
 
 
   // adding a hot dog for the hot dog mission!
@@ -1139,9 +1272,8 @@ function render3D(time = 0) {
     }
   }
 
-
   // make the other dogs!
-  otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds);
+  otherDogs = otherDogs ?? generateDogs(currentMission.otherDogCount, currentMission.otherDogBreeds, startIndex + 1);
   otherDogs.forEach((dog, i) => {
     // make a red herring if applicable
     let redHerringAction = null;
@@ -1150,7 +1282,7 @@ function render3D(time = 0) {
       redHerringAction = redHerringActions[i % redHerringActions.length];
     }
     let dogMvp = drawDog(gl, programInfo, projection, view, dog, redHerringAction, false);
-    allDogs.push({ mvp: dogMvp, ...dog, dogName: allDogNames[startIndex + i + 1], isBad: false });
+    allDogs.push({ mvp: dogMvp, ...dog, isBad: false });
   });
 
   // draw grass
@@ -1167,6 +1299,14 @@ function render3D(time = 0) {
     // draw leaves
     drawObject({ gl, projection, programInfo, view, world: null, tX: tree.tX, tY: 7, tZ: tree.tZ, sX: 6, sY: 3, sZ: 6, color: colors.slime });
     obstacles.push({ mvp: treeMvp, name: 'a tree' });
+  });
+
+  // draw bushes
+  bushes.forEach((bush, i) => {
+    // draw bush
+    // for testing, make the last bush pink
+    const bushMvp = drawRoseBush(gl, m4.identity(), programInfo, projection, view, [bush.tX, 0.5, bush.tZ], i % 2 === 0 ? colors.rosePink : colors.roseRed);
+    obstacles.push({ mvp: bushMvp, name: 'a rose bush' });
   });
 
   // this will be true if the button is pressed...

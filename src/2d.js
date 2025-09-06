@@ -1,5 +1,9 @@
 'use strict';
 
+// 2d canvas controls
+let canvas2D = document.getElementById("c2");
+let ctx2D = canvas2D.getContext("2d");
+
 const cameraUI = document.getElementById("camera-ui");
 const gameUi = document.getElementById("c");
 cameraUI.classList.add("hidden");
@@ -389,7 +393,7 @@ function drawMouse() {
 }
 
 // resize the canvas
-function resize() {
+function resize2D() {
   // reset dialog image state
   dialogImgFinished = false;
   window.webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
@@ -612,7 +616,7 @@ function render(time) {
 }
 
 addEventListener('mousemove', handleMouseMove);
-addEventListener('resize', resize);
+addEventListener('resize', resize2D);
 
-resize();
+resize2D();
 let request = requestAnimationFrame(render);
