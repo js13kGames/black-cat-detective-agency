@@ -209,8 +209,11 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
       const xDist = Math.abs(ox - x);
       if (obstacleInView && oz < z && xDist < 0.3) {
         inView = false;
-        // if (culprit.isBad) {
-        missReason = `that's the ${culprit.breedName}, but they're behind ${obstacle.name}`;
+        if (culprit.isBad) {
+          missReason = `that's the ${culprit.breedName}, but they're behind ${obstacle.name}`;
+        } else {
+          missReason = `that's ${culprit.dogName} the ${culprit.breedName} behind a ${obstacle.name}...`;
+        }
         description = `A ${culprit.breedName} obstructed by ${obstacle.name}`;
         // }
       }
@@ -1520,6 +1523,7 @@ function render3D(time = 0) {
 
       // https://webglfundamentals.org/webgl/lessons/webgl-tips.html#screenshot
       canvas.toBlob(blob => {
+        canvas.classList.add('hidden');
         // clear album element
         albumElement.innerHTML = '';
         allBlobs.push({blob, description });

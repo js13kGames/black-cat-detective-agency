@@ -90,6 +90,9 @@ try {
     // overwrite index.html
     fs.writeFileSync('build/index.html', newHtml, 'utf8');
 
+    // also make a copy for the root folder for github deployment :) 
+    fs.writeFileSync('index.html', newHtml, 'utf8');
+
     // 6. Zip it up
 
     // use bestzip to create a zip file

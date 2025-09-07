@@ -556,7 +556,20 @@ function renderNextMission() {
   }
 }
 
+function safariFix() {
+  const isSafari = /^((?!chrome|android|crios|fxios|edgios|edg|firefox|opera|opr|samsung|brave).)*safari/i.test(navigator.userAgent);
+  if (!isSafari) return;
+  canvas2D.style.visibility = 'hidden';
+  if (gl && gl.finish) gl.finish();
+  canvas2D.width = canvas2D.width;
+  webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
+  drawBackground();
+  canvas2D.style.visibility = 'visible';
+}
+
 function render(time) {
+  safariFix();
+
   ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
   drawBackground();
 
