@@ -459,7 +459,7 @@ function drawMouse() {
 function resize2D() {
   // reset dialog image state
   dialogImgFinished = false;
-  window.webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
+  webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
   mousePosition = {
     x: 200,
     y: canvas2D.height - 200,
@@ -471,7 +471,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-window.gameState = 0;
+let gameState = 0;
 let reply = true;
 let start = null;
 
@@ -493,7 +493,7 @@ function handleReplyTimer(time, textCount) {
 function renderNextScene(nextGameState) {
   return function () {
     startReplyTimer(performance.now());
-    window.gameState = nextGameState;
+    gameState = nextGameState;
   }
 }
 
@@ -547,7 +547,7 @@ function renderNextMission() {
     missionIndex++;
 
     // set up the next scene by resetting 3d properties
-    window.gameState = 4;
+    gameState = 4;
     missionText.textContent = missions[missionIndex].text;
     zoomAmount = 0;
     badDog = null;
@@ -569,14 +569,14 @@ function render(time) {
         renderedButtons = [];
         isStartingGame = false;
         transitionOffset = 0;
-        window.gameState = 1;
+        gameState = 1;
         startReplyTimer(time);
       }, 500);
     }
   }
 
   // gamestate 4 is the transition state to 3d
-  if (window.gameState === 4) {
+  if (gameState === 4) {
     transitionOffset += 40;
     if (transitionOffset > canvas2D.width) {
       canvas2D.classList.add("hide");
@@ -597,7 +597,7 @@ function render(time) {
   }
 
   // dialog state!
-  if (window.gameState === 5) {
+  if (gameState === 5) {
     // hide the 3d canvas
     document.getElementById('camera-ui').classList.add('hidden');
     document.getElementById('text-messages').classList.add('hidden');
@@ -652,7 +652,7 @@ function render(time) {
   }
 
   // start
-  if (window.gameState === 0) {
+  if (gameState === 0) {
     if (transitionOffset === null) {
       transitionOffset = 0;
     }
@@ -664,7 +664,7 @@ function render(time) {
     } else {
       drawStart();
     }
-  } else if (window.gameState === 1) {
+  } else if (gameState === 1) {
     handleReplyTimer(time, arr1.length);
     drawScene({
       time,
@@ -677,7 +677,7 @@ function render(time) {
         drawButton({ text: 'who\'s asking?', fontSize: 35, onClick: renderNextScene(2), alignment: 'right' })
       ];
     }
-  } else if (window.gameState === 2) {
+  } else if (gameState === 2) {
     handleReplyTimer(time, arr2.length);
     drawScene({
       time,
@@ -690,7 +690,7 @@ function render(time) {
         drawButton({ text: 'hisssssssss', fontSize: 35, onClick: renderNextScene(3), alignment: 'right' })
       ];
     }
-  } else if (window.gameState === 3 || window.gameState === 4) {
+  } else if (gameState === 3 || gameState === 4) {
     handleReplyTimer(time, arr3.length);
     ctx2D.save();
     ctx2D.translate(transitionOffset, 0);

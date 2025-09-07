@@ -60,12 +60,6 @@ const fragmentShader = `
   }
 `;
 
-let webglUtils = window.webglUtils;
-let m4 = window.m4;
-
-
-// let objectModule = window.objectModule;
-
 /* Setup WebGL context and shaders */
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl');
@@ -73,7 +67,7 @@ const gl = canvas.getContext('webgl');
 
 // add listener to resize the canvas to fit the window
 function resize3d() {
-  window.webglUtils.resizeCanvasToDisplaySize(gl.canvas, Math.min(devicePixelRatio || 1, 2));
+  webglUtils.resizeCanvasToDisplaySize(gl.canvas, Math.min(devicePixelRatio || 1, 2));
   // gl viewport will cover the entire canvas so things don't get stretched and what not
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 }
@@ -1531,7 +1525,7 @@ function render3D(time = 0) {
         allBlobs.push({blob, description });
         setDialogImage(blob)
         document.exitPointerLock();
-        window.gameState = 5;
+        gameState = 5;
         // caughtDogBlob = blob;
         photoDialog = `you caught the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
         dialogOpen = true;

@@ -591,7 +591,7 @@ function subtractVectors(a, b, dst) {
   return dst;
 }
 
-window.m4 = {
+let m4 = {
   transformPoint: transformPoint,
   identity: identity,
   transpose: transpose,
