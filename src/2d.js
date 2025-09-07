@@ -231,14 +231,13 @@ function drawScene({ time, textArr, offset, hasPicture }) {
     let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
     drawSpeech(textArr.slice(0, currentIndex + 1));
   }
-  }
+}
 
 let albumIndex = 0;
 function drawAlbum() {
   // Draw current blob
   const entry = allBlobs[albumIndex];
   if (!albumImgLoaded) {
-    console.log(allBlobs)
     setAlbumImage(entry.blob);
   } else {
     // add the picture with a frame
@@ -254,7 +253,7 @@ function drawAlbum() {
     cropAndDrawImg(albumImg, targetWidth, targetHeight, x, y, true);
   }
 
-  // draw description centered at the bottom
+  // draw description a bit lower on the computer screen
   const fontSize = 22;
   ctx2D.font = `${fontSize}px monospace`;
   ctx2D.textAlign = 'center';
@@ -472,7 +471,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-window.gameState = 4; // 0;
+window.gameState = 3; // 0;
 let reply = true;
 let start = null;
 
@@ -541,6 +540,7 @@ function renderNextMission() {
     }
     // start transition from 2d to 3d
     canvas2D.classList.remove('show');
+
     transitionOffset = 0;
     isStartingGame = true;
     
@@ -588,8 +588,10 @@ function render(time) {
         gameUi.classList.remove('hide');
         gameUi.classList.remove('hidden');
         gameUi.classList.add('show');
-        document.getElementById('instructions').classList.add('show');
-        document.getElementById('instructions').classList.remove('hidden');
+        if (!cameraMode) {
+          document.getElementById('text-messages').classList.remove('hidden');
+          document.getElementById('instructions').classList.remove('hidden');
+        }
       }, 500);
     }
   }
@@ -598,7 +600,7 @@ function render(time) {
   if (window.gameState === 5) {
     // hide the 3d canvas
     document.getElementById('camera-ui').classList.add('hidden');
-    document.getElementById('album').classList.add('hidden');
+    document.getElementById('text-messages').classList.add('hidden');
     document.getElementById('instructions').classList.add('hidden');
     canvas.classList.add('hidden');
 

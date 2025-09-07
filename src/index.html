@@ -11,6 +11,14 @@
             font-family: 'Courier New', monospace;
         }
 
+        p {
+            margin: 0 0 10px;
+        }
+
+        ul {
+            padding-inline-start: 15px;
+        }
+
         #c {
             width: 100vw;
             height: 100vh;
@@ -35,26 +43,23 @@
             top: 10px;
             left: 10px;
             padding: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 3px solid #000;
-            max-width: 300px;
             z-index: 10;
+            overflow-y: scroll;
+            height: 90vh;
         }
 
-        #album {
+        #text-messages {
             position: absolute;
             top: 10px;
             right: 10px;
-            border: 3px solid #fff;
-            max-height: 80vh;
-            overflow-y: auto;
-            display: flex;
-            flex-wrap: wrap;
-            background: #fff;
+            padding: 10px;
+            z-index: 10;
+            overflow-y: scroll;
+            height: 90vh;
         }
 
         .screenshot {
-            max-width: 100px;
+            width: 285px;
             object-fit: cover;
             margin: 5px;
             border: 2px solid #fff;
@@ -93,21 +98,6 @@
             width: 300px;
             height: 300px;
             transform: translate(-50%, -50%);
-            background-size: 20px 20px;
-        }
-
-        #camera-border-large {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: calc(100vw - 100px);
-            height: calc(100vh - 100px);
-            margin: 50px;
-            background-size: 75px 75px;
-        }
-
-        .camera-border-background {
-            background-repeat: no-repeat;
             background:
                 linear-gradient(to right, #fff 4px, transparent 4px) 0 0,
                 linear-gradient(to right, #fff 4px, transparent 4px) 0 100%,
@@ -117,6 +107,29 @@
                 linear-gradient(to bottom, #fff 4px, transparent 4px) 100% 0,
                 linear-gradient(to top, #fff 4px, transparent 4px) 0 100%,
                 linear-gradient(to top, #fff 4px, transparent 4px) 100% 100%;
+            background-repeat: no-repeat;
+            background-size: 20px 20px;
+        }
+
+        #camera-border-large {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: calc(100vw - 100px);
+            height: calc(100vh - 100px);
+            position: absolute;
+            margin: 50px;
+            background:
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 100%,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to top, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to top, #fff 4px, transparent 4px) 100% 100%;
+            background-repeat: no-repeat;
+            background-size: 75px 75px;
         }
 
         #plus {
@@ -126,6 +139,61 @@
             transform: translate(-50%, -50%);
             font-size: 100px;
             color: #fff;
+        }
+
+        .text {
+            color: #746dc3;
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .left-text {
+            position: relative;
+            width: 300px;
+        }
+
+        .left-text::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            left: -9px;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+        }
+
+        .right-text {
+            position: relative;
+        }
+
+        .right-text::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            right: -10px;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+        }
+
+        .instruction-block {
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 22px;
+            max-width: 300px;
+            background-color: rgb(207, 213, 253);
+            color: #746dc3;
+            border: 5px solid rgba(201, 207, 247, 1);
+        }
+        .instruction-title {
+            background: #746dc3;
+            color: white;
+            padding: 5px;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
         }
     </style>
 </head>
@@ -138,21 +206,28 @@
     <!-- The phone! -->
     <canvas id="c2"></canvas>
     <div id="camera-ui" class="hidden">
-        <div id="camera-border-large" class="camera-border-background"></div>
-        <div id="camera-border-small" class="camera-border-background"></div>
+        <div id="camera-border-large"></div>
+        <div id="camera-border-small"></div>
         <div id="plus">+</div>
     </div>
-    <div id="album"></div>
 
     <!-- instructions-->
     <div id="instructions" class="hidden">
-        <p>Hit Space to enter camera mode</p>
-        <p>Hit Z to zoom in</p>
-        <p>Hit X to zoom out</p>
-        <p>Hit C to take a picture</p>
-        <p>press I to toggle instructions </p>
-        <h1>Current Mission</h1>
-        <div id="mission-text"></div>
+        <div class="instruction-block">
+            <div class="instruction-title">Instructions</div>
+            <ul>
+                <li>click or WASD/arrows to look around</li>
+                <li>space: camera mode</li>
+                <li>z: zoom in</li>
+                <li>x: zoom out</li>
+                <li>c: take a picture</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="text-messages" class="hidden">
+        <div class="text left-text" id="mission-text"></div>
+        <div id="album"></div>
     </div>
 
 

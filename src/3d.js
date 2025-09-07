@@ -123,10 +123,14 @@ addEventListener('keydown', e => {
     if (!cameraMode) {
       cameraMode = true;
       document.getElementById('camera-ui').classList.remove('hidden');
-      albumElement.classList.add('hidden');
+      // albumElement.classList.add('hidden');
+      document.getElementById('text-messages').classList.add('hidden');
+      document.getElementById('instructions').classList.add('hidden');
     } else {
       cameraMode = false;
       document.getElementById('camera-ui').classList.add('hidden');
+      document.getElementById('text-messages').classList.remove('hidden');
+      document.getElementById('instructions').classList.remove('hidden');
     }
   } else if ((e.key === 'c' || e.key === 'C') && cameraMode) {
     shouldCaptureImage = true;
@@ -141,6 +145,30 @@ addEventListener('keydown', e => {
     // zoom out
     zoomAmount += 0.1;
   }
+
+  // WASD and arrow keys for yaw/pitch
+  const movement = 10;
+  switch (e.key.toLowerCase()) {
+    case 'arrowleft':
+    case 'a':
+      yaw += movement * sensitivity;
+      break;
+    case 'arrowright':
+    case 'd':
+      yaw -= movement * sensitivity;
+      break;
+    case 'arrowup':
+    case 'w':
+      pitch += movement * sensitivity;
+      break;
+    case 'arrowdown':
+    case 's':
+      pitch -= movement * sensitivity;
+      break;
+  }
+  // clamp pitch
+  const pitchLimit = Math.PI / 2 - 0.1;
+  pitch = Math.max(-pitchLimit, Math.min(pitch, pitchLimit));
 });
 
 
@@ -1186,14 +1214,15 @@ const breeds = {
   }
 };
 
-function generateBaseDog(inputBreedName, nameIndex, inputX, inputZ) {
+function generateBaseDog(inputBreedName, nameIndex, isBadDog) {
   const breedName = Array.isArray(inputBreedName) ? inputBreedName[Math.floor(Math.random() * inputBreedName.length)] : inputBreedName || Object.keys(breeds)[Math.floor(Math.random() * Object.keys(breeds).length)];
   const breed = { ...breeds[breedName] };
   if (breed.wholeColor && Array.isArray(breed.wholeColor[0])) {
     breed.wholeColor = breed.wholeColor[Math.floor(Math.random() * breed.wholeColor.length)];
   }
-  const x = inputX || Math.random() * 40 - 20;
-  const z = inputZ || Math.random() * 40 - 20;
+  const x = Math.random() * 40 - 20;
+  // start the bad dog a little bit further away
+  let z = isBadDog ? (Math.random() * 20 - 10) - 10 : Math.random() * 40 - 20;
   const pos = [x, 0, z];
   const direction = Math.random() * Math.PI * 2;
   const bounds = { x: [-36.5, 36.5], z: [-36.5, 36.5] };
@@ -1265,47 +1294,47 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  // {
-  //   // test mission!!
-  //   targetBreed: ['westie'],
-  //   badAction: 'jump',
-  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
-  //   otherDogCount: 5,
-  //   text: 'Test Mission!',
-  //   redHerringCount: 0,
-  // },
   {
-    targetBreed: ['german', 'pug', 'westie'],
-    badAction: 'tailChase',
-    otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
-    otherDogCount: 6,
-    text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
+    // test mission!!
+    targetBreed: ['westie'],
+    badAction: 'jump',
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
+    otherDogCount: 5,
+    text: 'Test Mission!',
     redHerringCount: 0,
   },
-  {
-    targetBreed: null,
-    badAction: 'speed',
-    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-    otherDogCount: 10,
-    text: 'Please take a picture of the dog running at full speed. It is very distracting!',
-    redHerringCount: 1,
-  },
-  {
-    targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
-    badAction: 'hotdog',
-    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    otherDogCount: 20,
-    text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
-    redHerringCount: 3,
-  },
-  {
-    targetBreed: null,
-    badAction: 'jump',
-    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-    otherDogCount: 25,
-    text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
-    redHerringCount: 2,
-  },
+  // {
+  //   targetBreed: ['german', 'pug', 'westie'],
+  //   badAction: 'tailChase',
+  //   otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
+  //   otherDogCount: 6,
+  //   text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
+  //   redHerringCount: 0,
+  // },
+  // {
+  //   targetBreed: null,
+  //   badAction: 'speed',
+  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+  //   otherDogCount: 10,
+  //   text: 'Please take a picture of the dog running at full speed. It is very distracting!',
+  //   redHerringCount: 1,
+  // },
+  // {
+  //   targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
+  //   badAction: 'hotdog',
+  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+  //   otherDogCount: 20,
+  //   text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
+  //   redHerringCount: 3,
+  // },
+  // {
+  //   targetBreed: null,
+  //   badAction: 'jump',
+  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+  //   otherDogCount: 25,
+  //   text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
+  //   redHerringCount: 2,
+  // },
 ]
 
 // fill instructions with initial mission text
@@ -1345,6 +1374,7 @@ function render3D(time = 0) {
   } else {
     fieldOfViewInRadians = 60 * Math.PI / 180;
     zoomAmount = 0;
+
   }
 
   // This creates the projection matrix for the camera by mapping 3d coordinates into 2d clip space.
@@ -1377,7 +1407,7 @@ function render3D(time = 0) {
   let prevMission = missions[missionIndex - 1];
   let startIndex = prevMission ? prevMission.otherDogCount + 1 : 0;
   // make the bad dog >:) 
-  badDog = badDog ?? generateBaseDog(currentMission.targetBreed, startIndex);
+  badDog = badDog ?? generateBaseDog(currentMission.targetBreed, startIndex, true);
   const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction, true);
   allDogs.push({ mvp: badDogMvp, ...badDog, isBad: true, badAction: currentMission.badAction });
 
@@ -1446,6 +1476,7 @@ function render3D(time = 0) {
 
   // this will be true if the button is pressed...
   if (shouldCaptureImage) {
+
     albumElement.classList.remove('hidden');
 
     // reset the flag
@@ -1456,19 +1487,35 @@ function render3D(time = 0) {
 
     // if the player doesn't successfully catch the dog, they will get a text message
     if (!capturedDog) {
-      albumElement.textContent = `❌ ${missReason || 'you took a picture of nothing'}`;
       // gl.finish() will block javascript execution until all webgl commands are finished by the gpu.
       gl.finish();
 
       // https://webglfundamentals.org/webgl/lessons/webgl-tips.html#screenshot
+      document.getElementById('instructions').classList.remove('hidden');
       canvas.toBlob(blob => {
+        document.getElementById('text-messages').classList.remove('hidden');
+        // clear album element
+        albumElement.innerHTML = '';
         allBlobs.push({blob, description });
-        const screenshot = document.createElement('img');
-        screenshot.className = 'screenshot';
+        const leftDiv = document.createElement('div');
+        leftDiv.classList.add('text');
+        leftDiv.classList.add('right-text');
+        const screenshot = new Image();
         screenshot.src = URL.createObjectURL(blob);
-        // append image to "album"
-        albumElement.appendChild(document.createTextNode(' '));
-        albumElement.appendChild(screenshot);
+        screenshot.classList.add('screenshot');
+        screenshot.onload = () => {
+          // append image to "album"
+          leftDiv.appendChild(screenshot);
+          albumElement.appendChild(document.createTextNode(' '));
+          albumElement.appendChild(leftDiv);
+          // response message
+          const textContent = `${missReason || 'you took a picture of nothing'}`;
+          rightDiv = document.createElement('div');
+          rightDiv.classList.add('text');
+          rightDiv.classList.add('left-text');
+          rightDiv.textContent = textContent;
+          albumElement.appendChild(rightDiv);
+        }
       });
       // get out of camera mode
       cameraMode = false;
@@ -1480,6 +1527,8 @@ function render3D(time = 0) {
 
       // https://webglfundamentals.org/webgl/lessons/webgl-tips.html#screenshot
       canvas.toBlob(blob => {
+        // clear album element
+        albumElement.innerHTML = '';
         allBlobs.push({blob, description });
         setDialogImage(blob)
         document.exitPointerLock();
@@ -1487,6 +1536,7 @@ function render3D(time = 0) {
         // caughtDogBlob = blob;
         photoDialog = `You got the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
         dialogOpen = true;
+        cameraMode = false;
       });
 
     }
