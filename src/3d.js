@@ -1,4 +1,3 @@
-
 /* Setup Shaders */
 // see: https://webglfundamentals.org/webgl/lessons/webgl-shaders-and-glsl.html
 // shaders are written in GLSL (OpenGL Shading Language)
@@ -153,7 +152,7 @@ gl.useProgram(programInfo.program);
 /* this is the frustum test */
 // Obviously this could use a LOT of cleaning up!
 let culpritIsMisbehaving = false;
-function isObjectInCamera(mvps, obstacles, view) {
+function isObjectInCamera(mvps, obstacles, view, sunMvp) {
   console.log(mvps)
   // use this to check for other-dog obstruction
   const badMvp = mvps.find(mvp => mvp.isBad);
@@ -260,6 +259,26 @@ function isObjectInCamera(mvps, obstacles, view) {
     missReason = `You captured ${closestDog.dogName}, an innocent ${closestDog.breedName}!`;
   }
 
+  // see if they took a picture of an obstacle!
+  if (!missReason) {
+    for (let obstacle of obstacles) {
+      const [ox, oy, oz] = m4.transformPoint(obstacle.mvp, centerOfObject);
+      const obstacleInView = ox >= -1 && ox <= 1 && oy >= -1 && oy <= 1 && oz >= 0 && oz <= 1;
+      if (obstacleInView) {
+        missReason = `What am I supposed to do with this picture of ${obstacle.name}?`;
+      }
+    }
+  }
+
+  if (!missReason) {
+    // if they took a pic of the sun, scold them.
+    const [sx, sy, sz] = m4.transformPoint(sunMvp, centerOfObject);
+    const sunInView = sx >= -1 && sx <= 1 && sy >= -1 && sy <= 1 && sz >= 0 && sz <= 1;
+    if (sunInView) {
+      missReason = `MY EYES!!!!`;
+    } 
+  }
+ 
   return { capturedDog: closestDog && closestDog.isBad ? closestDog : null, missReason };
 }
 
@@ -604,6 +623,25 @@ function updatePosition(dogState, time, badAction) {
       break;
     }
   }
+
+  // check for collisions with benches too
+  for (const bench of benches) {
+    const benchWidth = 2;
+    const benchDepth = .6;
+    const dx = dogState.pos[0] - bench.tX;
+    const dz = dogState.pos[2] - bench.tZ;
+    if (Math.abs(dx) < benchWidth && Math.abs(dz) < benchDepth) {
+      dogState.direction += 100 * (Math.PI / 180); // rotate 90 degrees!
+      // nudge dog outside the bench if they get stuck :\
+      if (Math.abs(dx) < benchWidth) {
+        dogState.pos[0] = bench.tX + Math.sign(dx) * (benchWidth + 0.1);
+      }
+      if (Math.abs(dz) < benchDepth) {
+        dogState.pos[2] = bench.tZ + Math.sign(dz) * (benchDepth + 0.1);
+      }
+      break;
+    }
+  }
 }
 
 
@@ -735,8 +773,8 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
   return mvp;
 }
 
-function drawRoseBush(gl, world, programInfo, projection, view, pos, roseColor) {
-  let bushWorld = m4.copy(world);
+function drawRoseBush(gl, programInfo, projection, view, pos, roseColor) {
+  let bushWorld = m4.identity();
   bushWorld = m4.translate(bushWorld, pos[0], pos[1], pos[2]);
   bushWorld = m4.scale(bushWorld, 1, 1, 1);
   const bushMvp = drawObject({
@@ -799,6 +837,80 @@ function drawRoseBush(gl, world, programInfo, projection, view, pos, roseColor) 
     });
   }
   return bushMvp;
+};
+
+// Draws a bench with 4 legs, a seat (surface, MVP), and a backrest
+function drawBench(gl, programInfo, projection, view, pos, rotation) {
+  // Bench dimensions
+  // Compute seat world matrix (translation + rotation)
+  let seatWorld = m4.identity();
+  seatWorld = m4.translate(seatWorld, pos[0], pos[1] + 0.25 + 0.1, pos[2]);
+  seatWorld = m4.yRotate(seatWorld, rotation);
+  seatWorld = m4.scale(seatWorld, 2, 0.2, 0.6);
+
+  // seat (mvp!)
+  const seatMvp = drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: seatWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    color: colors.woodBrown
+  });
+  
+  // draw the legs positions
+  const legPos = [
+  [-0.9, -0.225, -0.3], // front left
+  [ 0.9, -0.225, -0.3], // front right
+  [-0.9, -0.225,  0.3], // back left
+  [ 0.9, -0.225,  0.3], // back right
+  ];
+  legPos.forEach(pos => {
+  let legWorld = m4.copy(seatWorld);
+  legWorld = m4.translate(legWorld, pos[0] / 2, pos[1] / 0.2, pos[2] / 0.6);
+  legWorld = m4.scale(legWorld, 0.1, 1.25, 0.3333);
+    drawObject({
+      gl,
+      projection,
+      programInfo,
+      view,
+      world: legWorld,
+      tX: 0,
+      tY: 0,
+      tZ: 0,
+      sX: 1,
+      sY: 1,
+      sZ: 1,
+      color: colors.woodBrown
+    });
+  });
+
+  // back rest
+  let backWorld = m4.copy(seatWorld);
+  backWorld = m4.translate(backWorld, 0, (0.1 + 0.3) / 0.2, (-0.3 + 0.075) / 0.6);
+  backWorld = m4.scale(backWorld, 1, 3, 0.25);
+  drawObject({
+    gl,
+    projection,
+    programInfo,
+    view,
+    world: backWorld,
+    tX: 0,
+    tY: 0,
+    tZ: 0,
+    sX: 1,
+    sY: 1,
+    sZ: 1,
+    // backrest color (slightly darker)
+    color: [colors.woodBrown[0] - 5 / 255, colors.woodBrown[1] - 5 / 255, colors.woodBrown[2] - 5 / 255, 1.0]
+  }); 
+  return seatMvp;
 };
 
 
@@ -938,6 +1050,7 @@ const colors = {
   ivyGreen: [75 / 255, 96 / 255, 61 / 255, 1],
   roseRed: [190 / 255, 30 / 255, 45 / 255, 1],
   rosePink: [255 / 255, 105 / 255, 180 / 255, 1],
+  woodBrown: [101 / 255, 67 / 255, 33 / 255, 1],
 };
 
 
@@ -1114,6 +1227,11 @@ const bushes = [
   { tX: 4.3, tZ: -10.8 },
   { tX: -7.5, tZ: -5.4 },
 ];
+const benches = [
+  { tX: 15, tZ: -15, rotation: -45 * Math.PI / 180 },
+  { tX: -15, tZ: -15, rotation: 45 * Math.PI / 180 },
+];
+
 // rendered dogs
 let allDogs = []; // go to heaven
 // the big red herrings
@@ -1136,15 +1254,15 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  {
-    // test mission!!
-    targetBreed: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    badAction: 'speed',
-    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-    otherDogCount: 25,
-    text: 'Test Mission!',
-    redHerringCount: 3,
-  },
+  // {
+  //   // test mission!!
+  //   targetBreed: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+  //   badAction: 'speed',
+  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+  //   otherDogCount: 25,
+  //   text: 'Test Mission!',
+  //   redHerringCount: 3,
+  // },
   {
     targetBreed: ['german', 'pug', 'westie'],
     badAction: 'tailChase',
@@ -1230,7 +1348,7 @@ function render3D(time = 0) {
   drawGround(gl, view, projection);
 
   // draw the sun!
-  drawObject({
+  let sunMvp = drawObject({
     gl,
     projection,
     programInfo,
@@ -1305,8 +1423,14 @@ function render3D(time = 0) {
   bushes.forEach((bush, i) => {
     // draw bush
     // for testing, make the last bush pink
-    const bushMvp = drawRoseBush(gl, m4.identity(), programInfo, projection, view, [bush.tX, 0.5, bush.tZ], i % 2 === 0 ? colors.rosePink : colors.roseRed);
+    const bushMvp = drawRoseBush(gl, programInfo, projection, view, [bush.tX, 0.5, bush.tZ], i % 2 === 0 ? colors.rosePink : colors.roseRed);
     obstacles.push({ mvp: bushMvp, name: 'a rose bush' });
+  });
+
+  // draw a few benches
+  benches.forEach(bench => {
+    const benchMvp = drawBench(gl, programInfo, projection, view, [bench.tX, 0, bench.tZ], bench.rotation);
+    obstacles.push({ mvp: benchMvp, name: 'a bench' });
   });
 
   // this will be true if the button is pressed...
@@ -1317,7 +1441,7 @@ function render3D(time = 0) {
     shouldCaptureImage = false;
 
     // Validate place within frustum for each subject using its center (model translation)
-    const { capturedDog, missReason } = isObjectInCamera(allDogs, obstacles, view);
+    const { capturedDog, missReason } = isObjectInCamera(allDogs, obstacles, view, sunMvp);
 
     // if the player doesn't successfully catch the dog, they will get a text message
     if (!capturedDog) {
