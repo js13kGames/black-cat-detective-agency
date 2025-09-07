@@ -1,0 +1,245 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Black Cat Detective Agency</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: #111;
+            font-family: 'Courier New', monospace;
+        }
+
+        p {
+            margin: 0 0 10px;
+        }
+
+        ul {
+            padding-inline-start: 15px;
+        }
+
+        #c {
+            width: 100vw;
+            height: 100vh;
+            display: block
+        }
+
+        #c2 {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+        }
+
+        #take-pic {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            z-index: 10;
+            overflow-y: scroll;
+            height: 90vh;
+        }
+
+        #text-messages {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            z-index: 10;
+            overflow-y: scroll;
+            height: 90vh;
+        }
+
+        .screenshot {
+            width: 285px;
+            object-fit: cover;
+            margin: 5px;
+            border: 2px solid #fff;
+        }
+
+        .hide {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .show {
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #camera-ui {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+        }
+
+        /* https://stackoverflow.com/questions/14387690/how-can-i-show-only-corner-borders */
+        #camera-border-small {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 300px;
+            height: 300px;
+            transform: translate(-50%, -50%);
+            background:
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 100%,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to top, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to top, #fff 4px, transparent 4px) 100% 100%;
+            background-repeat: no-repeat;
+            background-size: 20px 20px;
+        }
+
+        #camera-border-large {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: calc(100vw - 100px);
+            height: calc(100vh - 100px);
+            position: absolute;
+            margin: 50px;
+            background:
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 100%,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to top, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to top, #fff 4px, transparent 4px) 100% 100%;
+            background-repeat: no-repeat;
+            background-size: 75px 75px;
+        }
+
+        #plus {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            color: #fff;
+        }
+
+        .text {
+            color: #746dc3;
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .left-text {
+            position: relative;
+            width: 300px;
+        }
+
+        .left-text::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            left: -9px;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+        }
+
+        .right-text {
+            position: relative;
+        }
+
+        .right-text::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            right: -10px;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+        }
+
+        .instruction-block {
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 22px;
+            max-width: 300px;
+            background-color: rgb(207, 213, 253);
+            color: #746dc3;
+            border: 5px solid rgba(201, 207, 247, 1);
+        }
+        .instruction-title {
+            background: #746dc3;
+            color: white;
+            padding: 5px;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TODO: obviously I need to refactor this a lot, minify css, remove the elements and create them dynamically -->
+    <!-- The game! -->
+    <canvas id="c"></canvas>
+    <!-- The phone! -->
+    <canvas id="c2"></canvas>
+    <div id="camera-ui" class="hidden">
+        <div id="camera-border-large"></div>
+        <div id="camera-border-small"></div>
+        <div id="plus">+</div>
+    </div>
+
+    <!-- instructions-->
+    <div id="instructions" class="hidden">
+        <div class="instruction-block">
+            <div class="instruction-title">Instructions</div>
+            <ul>
+                <li>click or WASD/arrows to look around</li>
+                <li>space: camera mode</li>
+                <li>z: zoom in</li>
+                <li>x: zoom out</li>
+                <li>c: take a picture</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="text-messages" class="hidden">
+        <div class="text left-text" id="mission-text"></div>
+        <div id="album"></div>
+    </div>
+
+
+    <script>
+        // WebGL linting! This is a hack to make sure it doesn't get into the final zip!
+        if (location.hostname === 'localhost') {
+            const s = document.createElement('script');
+            s.src = 'https://greggman.github.io/webgl-lint/webgl-lint.js';
+            document.head.appendChild(s);
+        }
+    </script>
+    <!-- inline-start -->
+<script>eval(Function("[M='FZrMViDbgKfvYQGLopEqJn^m?iTE?lze@xG^EWzo|gdvdLRmaTrWzG]OxVPWVk_A^ksjJ__KsKcGrqSOnyaUCoMC[HlXZYcYEm^eAonTwV@SPYeCW]bmtNWwORywAI{ebJNild[ELmMpJtEp{}tgs]IUZfFDKemNe@g]CLMbsfqW|TEuJRcVJVQ_lhoZe?]|ZjXYrkWAWBc[hdncFFeFYQKZjCuUIftob~Pse^@rW]MnnGyyQi[}qzeDzQfcctBYY{Oe_gegR[yiQHQ]aFOs`zuKLVZBjCVpaCIkG|PvL^cE]nmfGvmZDx{`zAjX[~MLzwStm|[nNUEuUhqE}BzRRhtkBl[u}E_qMoKa~kRwVoWqG^iRFSaHLC@PoBZ}pudHppJWmFD[?RTZoeZjW_i}naht[swFuQ|[IS^EfIej_iDO?_VzX`P]GWrZhxVDGsV|dmLtLMQAvZh~AX[Z`RQbsxSp@kfKjdvinbRSGi~IRwJIrFnU^nyg}PuMA`[fX[USUB_KK|Hk^~~RQmyJ@fV|yASXA`}^bjTPJSo]ScbW^JiXpxd`njD?oBAqWp}bJ_Ca{{~xfZ_GBe{QCa^qWFndcvPr|rZVOAEdR[eiCzJQ^u{bmBN[oPfYWU[TSUZtf@wl^fxL}ZOUCNjgq`|bEDUXlVqJQ{h_@jjJI@y|ff?FjWe[AfImdM`mXNECGijqVdewigRJnPi{KIw`{WaRQ@PjaFZxA}cXNzJ@j{nvrrbEdhzVLHAkEb^YtTLZ[vV}bEnn]qylZq~?HYUnaXqZae?pYgjdAD`GzI]vPgv}xbGwQqlgI{sXTNkt?ub?Bu|bPLDGm{_jsFdEzT~YGgGmYwfEWE]UeRlQa_QqI]eX~YQe~wgjJIEN{kXEuL`eL[qBZIhIQcORy^vE@eyeAEJ_bjcNOBAk}YLgEQB^^Dv||UthI{ZZyWkHJ`mktoaq~lUmF]KEKKmoGFAmU`T`O|WKpSQhIILp|?s~P_oLK^oTjzqXB{ipjn^rUQPpYIef]ziSgDej[qYbHTyhmlGgI`hphSdL[VdXGoWB}UZLALtV[BFY?b@q{NQHpCW_WeICJ|yMntOESwS{XTPyoww?btSOQVeBZcRAz~PHiFLOHmJVQ|tqNA]y_n@mU[yDZdAdwd]kwQDVxFW~@cN@NWKFL?hoA[BeeDS?C@iqMuWlQR{|_dU_QFDAT}WfsPqdhDT~XeBWV}R}b{RCqppZqeWVq{{]p[kgDNbYx@UdjlXRxYBY@JBAt{FwC^@eFNXRlw@^rYJLOfci?H_Lxc|fpeCtbmyEaY@QfiUoHKjBEACnk{Zdsdg?[zsdOgfeHPZ~xPUzxsAr}efxdGQiTDnimb~Ta[HvgZxN|ErfpAbONSzYS@vTknjhycAs_OvZ]NGxgFgsjjVC{Q|}FjwJbqMre~Ep`iX|RwAKxyrQiLXwvCIwKxdQEDMlzaeb{Bu^dBt~poGlVrEnZ{hxndGq^Iz}nnPLF`Aml~vHrQ?P|FwvPVh[lNdrefT{BWtPFfm|wfMhIY^B]syNvjtEwz|KthtNRg{mt@]myk~XafaZs|SLjMAmivnSgPLwTP`pTUV_JnxNNhY?C`JFMNc[cWDfdya`RMUee}s|`zMaoKrpdIgZu]MGz|YdeA[BWu]S`mAJgPPKPdZOHrWqBUMqiXdPw@OMpbxEaIDHlBgHKYC^{g[sf`u_skmUyJsvmWStT{vTgRygW@tGzq[^ic~`e]k[f}~?BkeRSqae?FFaj{JzS[^OVXR^piLDfrhimKCEzpGEPV|NjySi^Tb?wYaJHlPxIFTntzQYBR]ijQ?NM]|D[jEtSVZhJYLrKol}Nh^tA?Aj}]N{?cz`yYE{SmGHhtOD~zcqllzWfZG]yhzVUIvBvuOYYzpvgRQbpDRCLl|du}KeQhZqCgaPTk|OsoAhGor^UWWvsU^LYtgGaCRMm?UQ{r@lZnAgBO]YZKhGBnANnlKA?USzc@PhXaps{dacL|maMyG_A|MulRIzH[R`T^oR]Wo@EUiDduvDFBBSgB}j@rT}?ZJfTTsYP{^UvDHl@MhV[dSevyQe^gcrvjCdNhE_zO]fSj^HV|hLhhq@ZxmyZqKUM{hjYdONlEjdbJikJUUM?ZgLRJJwDi[BTJkuOSZKdhTTYCzkyN?UNcyAD}VbBsIDfCb]dnpDg~DVJbBuJhVtbkWemV{[hfqiXfNzXPnAOGRDMsmolH?ffyVWcI~GszPTqhX~z[TDhnFUSjnrf`?s[yeVZhffZN]safrjGHnNTeF^cKUc@gT{Fntvx]KvshfFDs@lLnJpwUD{?A`my{hpCenBsRWYKcvoKOZiVDAZsBWpjBlUJDi]slaz~hwLn{|GiPHbUSeGmmbNoyfPZ}nzPWkPePxw^{zffZMtsGQJAlwrFzZQjvKX_WvlAC^_gZXIszBaV{fgGRebDOY|MNpQE]XsBDqEt{I`YuZ|HfwsKLzZoyDX[FryA}teeRIKnyWOyXxHPUQz@NrJIywzlxLmpNl_d^i^WLkKQnVw}jzrO^OMbk@gT{uKkZhAoSZEN_^us`b@eRfdXui}SCQS]ZqnuslJBWKNebo[o?tjkxea`SdyB_CeAdVeNRQ]f@bNKohoQza}?sRRGtI?lukPBMhlf{T^XIstVtLlS^sSL^lu}seo}NkHXuXhBAIseIf_SueDWmgXo]FIvNdYi[`l`u}XJvX{`GqwNafVpqB~klt^zSxmPdCrur~~cprniXL]?ELVgnkeAg?b@i?JBTakAIMzmEZ@HoHantxmPvP^Df[G[?HFbwbt~BCGNyGFugDk@jstA|t?_@MKMmOUfRBM`YysywMhE}zAIAL^XDGMupSnoQEgYKQAZN_eDZ{@dqfqYwDTgielZULpVAL]yMmxegg^jePAWPTim~vEJmA`kCaw^pS_HzRNL?TgpDs}VMH?^KdV[ScX@CAuKPgRQBPUjxBZBBQOGhRCZ]`_EkV{~ftBLjm~T|wIFqTdWggHakBcDP[uc{^?vMR?h[r]IUiHKqiKfihTmMKgyxUE_V}Om@PuB^olJhNE[J}NMC?fZSnqDYwSN~FKs{OAf|^EdbUxLWnEvmgY{esIFfPu}Cgse[R`Ar_YU``pJTqnnthLzXcrSY~jU^taZDoFarnZlP|UhyZfabJDeEZXZkJ}XBCgfJ{FfQofH{[_BBSdAb?lORcL]^J^^|hVVcDja`F@EleM?B}hnD@ZTMQiil^PWviH}e]pmxqslVxr`Kf?^YMIunZCHMNjfrAzEVKmKRxv|[PrpK{N~BhT{OBsTDfK`rtqKdoRw{o@eeMofXlseeGLnQ@Rb_vyTbflIJsvBZBBut}hvOMgnJNMhe@n~cHxUZxDEIDdNX`Gfx?pOl_LAOgAMiDPdix?NDjmtHpO}@a|GwSrr{vBYbzY^q][DdLJkROmwbyPEvpKXl[hKbj]@sZF_wwmKOH@F~MGrimwdbk~g}Wrj}WhSsCaoGCCjiyH_I_Bvu]VZdPFLegaDq_XrtcO_CyWozGyga?AKjwmlA~mnLFVfPeguEkNCvsa?`}f@aVkmGgebtsNzoss_~FZjNBIaVSA@eSsG[CdjpHYaDxRPkIGgVBrq`[}Bx?MYAlktKiPo_O`zD{YwzfXCITCqZVjJk@xeUGvTbWGpOUHAspjedjpwT`l`_i{EM^uWI`ynwW|giFyFIlleXTbkZv`qA?lWJ_[BBDbwVtFpJnNYGGm@_KQk|kGQqDagoqUzn^uAJJryrsJf`lVYoocW@sZXTvpAKmzyBaEnRyzwE|EmJYbcJPbadJyLjYJiuBxDDLqaSPbOv`qve{qIgL^DhSPQCLIQcY|XM[ATH?B|URd~l~KhDzC|@aCUnTwa{QFVrdA?_vZJIHJdoFIibv|ep@iB~Zco`NeLGa_@ZJe^RYQAAgsbybu|xaz~a{YJzJJUmH`AVozW_YVoTdHa_IDXKweITwpLbH~wwcUsV@Yb@vbw[@QidDY{gdUxEunfpA]tKYhivf}e@[YVqUMUy_QfMZgtuGFROhwIJztLDVe~^PsBmVx~lFk{m~Zar[SmtO[HLCMVJtu|x]hB?pFBqYYFZNHGR]aPi^zWM_]mGRNo`RX}~^YigcwCZUILuN[jBsgcJg`ZZwX]dOs@plCfS]YD`Po`ePkGaijs|AyHKNTVMzBRHJhQEWMnAQrhEVvwQiz|UFQPAtUg]Gtg[q{Bbg~vslPhmKvwRWXOeC]^yEaUZxlmACl`wrEAIFz?qkhzpEXHRQlEwqFTHwZVriUIwM[kegdp}~~h`lvOBSTXTHtHimJVLrVFb?hOTShyO@jPF~O[?|I]IM@YFbrRyRHA^zhoy_jx^aL^fs@NAqiT^u_BmV`}{bgmF@OvBGjuA~PiVKyNPOGbdHwmg~gPQaLXIhZfnuQteagJoYj`cIMg}_qqWzXS{ByQJcNsFupFRcyXfutNMgMDgEz{XNfTu}~al?xbiG{KywRjw{{}`m[ymAzgL}SDNBtD|X?KKGTLxgPJ?XIgIKyKO@VappZAC`LFQAECStPKudMBgNb@uEqnJzayFUfPyJKUH^soAleZiBRgN[rrZ~b}piCCL_ZotfWeXGF`b`l@tDm{JqCDyqHi~|pHFectWssOX|D]RstIIpoye@J~~_`I~M`QmTLDzfQ`^xKd[?Mx|qCl_OwkdJd[okLfeOeqf]gbH@DasBuI_SkSuqpwxDLH`O^YxVpVCrSm?ua@gop_kfpvYTRyT^}PuSmv]qWA`ApjBztC?j{q[dKuN`OKbp|PkkQubKpArGPsP]_FA@DbbrcDA{PqO}nVCFTKosyKwBrCPLIB?TJv`Bt@CUj_}hsl_w}HaSbWWhtfkmCQ]grVStURiODXMuFGUm[kc`ui}zY`KhUsAHLd?RvAIHsBN}pXuKGMgRAqGNRkxk_K|Iaz[[P}JbEdT[}nro{YB?VKVhlzcqeEePgMVnSNweFlaw`[|Atvy@a@AYjUsGMMkYV_?_QL@QHXHBqjQeS{[WE~Y^xLtWZIxG?KPrGOMwGi_dAfdgn_kT|skrTdeZLT{tORlnbE|Ra~iOxmYAvkpE_uVC[iOtArL^LDTTpOBXi||Iuf{GVG]^Pnd]fWFtNhN~ITfu{pSgNRBlmEUMuJhA{|XSrSgK]GUoahML?jwXe}HQkEuLMY`L[_CUdrwxwkBnE|wveJydEPs?ZGr]yqT?DYNFrUQ]QACNb]nYPbWm~|cyNQ]G?{|]HEfgYzEcEGAPPvyAPdy]_kFRRt`ONBUQKx`gt]EvHlpirBRKnSKjhkdPlQC^R[gHykY^@azUchfxNY`X}b]wRcvGpCeFFuFBNNJounpp@JSWc}hb|@C`{LTu[}UIGNy~UezIAbIN@UAFwHcVIAELv[LujBHP}CTShCfvr]`B?MN?Yij|P^esisDWQ@L|hcFUM`itTEu]|Po^arTJmV@{{xowjrafL?VvVO@KIiwDtM^KcnMqdobp{TXwU@ZuFzJB~YNp`gg}Eto~Yh{raHQjLAPQIeKJfZKrDMDhiYYSzncera{h^vKcSq}GWDOjsVLBXZLOnVZwmjlzmVDOknF`bssyK_BOH}vJCQsjRdaWBBDYc|XjUykQ^VEsZn{UXVGjJrYoexZCIDFm[VaUcMaZDQXr@jV`humSEs[cpMayD~qdMAUmVH[soVWqTozI|fNU@}G?{|uZ}dFPy|ZE_g?gfhPg`JSdiyXmbW@abPHWBMXhZ@lsDG^fq@^IpMwwBKtY~lVeuJiadcVWDlO|DAnbVnBfe}s^{iS}asBdQSEJ}}eb?R^QZYipMqf@?kjQgT}`vJJUpedEpoFYvWoULmHAR~ou~ExtrnRDsEXpCmjAQuiC~fqxvfkwEM~ouG?FyBVdn@^cjYWjbC}`gdhfDVpMAOq}aR@`}Xfv?{a?R~MiW_DWvY@LoMWoSOHx@@`K@wMWDwbSUFgTYBN[lYxcgJsDPuGbfVueyftypeWKgqKNcoezO@vyEorxnv`uV[tgrxcIHnQ|szqpYOLC_Cpj?d^M`TYdLLmVkjjmRx?hw@^hEz^NUpua?WKd}dn{wCkGrHkEsKCjaUga`mRhKTbsUEUoPDijWnu|kyRRD~zrgH|Yr?ATIFCQwUO^umlwjwbdXMKnlcU~zlCSNjVz]n{vmrpVSzjl@jx[UjuzaYW~}mj{{?fleR~cBnnqC_jYIN[UgGj~~dfc]BnegwQSlBiAurgd]eCC[zaO~tqdaBU^rRKqoH[`oXJqFZMcs_b^eW|Y}okQRSibMSMIm^Bu?K}TMWKPY}O?xl[[cuMpMhG`Jiq?YjT`tVXL`~mAtNwRpaZqnZJnZXfE{uN^DM{`lsXn]eoTieKRwFe^Tvc]fUnthnWjVFauc@aFYLQ?e[yW}{C}w|?eBov]tXLBQYHB^h}fQde{BWOSTqtX~V[BuC?BCa]JqKSf@OoCfQIE?U^nn~EaU|FG_YyIEUHn[r[CIf_rIL|mYHp}_RdbMvPCRoEKfts[x}]QBTjPq_xxqRPgza~anj?GEgNYkR{_MquNpJ[T|`^D`cn[JSJm[zFUH_guvxl[Vp?~BLnmY`vCBflsGK`vu^PhVpvo|?AVV]^k?wYaOpeiKLKez{lZPPb~ZpB?@qQUtZltUIbyILt[E@DAqhfb_}geqjVLf?}EBlVzAaE}KMh_KBR}Ijgw{VNYbwBxuD[LfeIZNnUBXJqEtLWU@PQz@o}wJnhnf_}ehgMU{jUedwlaGDRbf^lzTJgAvxNTltHnCqJLRUP`mXfXkt{DMwjItfroh|djzqJuH@~oNJeU^zJ^mSlL_mprqE|Wu|C|aTBxSqypypKKE~~R?KJM?ltSHB|cDMGEW^COjE[IHF{A?OeynpRQdwPUmbG~|HpzW_`AQ@frb?HWpgzM@ZiYn~vLwtq|[[r|oX@pe]aUm`_~pjzKLRuQ`ygJzbXzOE~`o}Z?HncqME[}cRWEWO{`@PHjCro[ZFFNMNC~tDiSBlCwW[uwtTNBhUcqiV]esLJPHIOlnkFBXjHGVQBEG_MOPXW`mld`tBh}K}OkxZvMgRbgsqnhIPYb`COqMQ`aWgm@|SduhVF?bCvx^FQNyNI`K`[lNZO?|isYPCC_XXLBm`tyGOWEAKrCcrmXPGt@daa`OZUEMm^Nj?cCd^][FmsocFCM@nZfFjJKtZyRJ|FQdo~}oo]X]{UFN^LlF]ctKSYh@Cyzhn?^ybj}YhV[Y}ktpeKhavptN?~Ia|RUCU{K@Ij`jFwcqeH@fnnHkqBltb]pN[xgXXTBzh^icvHYJsCkr{ca[MhbLVdUhhSsiy|GAJUPyWK[mVcWh~}CImrpxAvy^cVmeiHX@_Dzse]Y{]wStlXB{s^qhcKbIcpddNoet@JY@Vp{H|J?{IPMm~vfugxD]qVTPOMhkzbgeCyr|QhCgqkq_ufxi]IBrU]feeIxMnlEAXCrnaxvFmRDqJDgdjY@rWVuVXSB]|mHyiFTtckG?oExlYbVpUrfwEJGuAU{bGU}QAmDJK~lfoIBF]sWTBwQ?aFB^xjwVeNCP_~eRfRovs?zEOUG|_PsFqmN}~F|a_Wy[uhq`{gYtDZWVpjKVeHmO{K~BYfVMOMVpercWetVc[p_a?PRrV[rcdx}hO^dt}]sc`MmP}]dvRfqBORd}_|WDb{As]bTsIq`ZllnS|F[NCGSf?J[jfB_CPwIuyhWwcSPmUdgo^yzMepRtZ{UxrzDGNHsKaIvM]LHvG_IFsCzdy~Jej~QwCGQwfucoexuiE]vq?|k_wdUEGNEhUmjekOAgcnzr{DToaN`IaX^ojSpwU?nU~U|mT``Oek}p{^iihgFIwBW@}JHM]dpyT{fuVUdwDd`ftycPevoWW~VR_XDFV{t^_LjPZvSUYmWLXSThgkvDfkI|WkRViTjhXLaaaPDh^`HkG[^R~gQCXNjcORZP]TBrR?j{kCPx|ox]kE{SWAUIDnrFp?FOQZMIAkp`ELpJqByfh_`|inWAuO@aTN|LyocYGvVhJfjUmIKsL^F^Ib}UYVuKucTuPe@j]tCjOhAA{K?aWqobq`GJsirApUwmD?jzeCp`UrcUdxzSRVQf{R}LOdVV`f~PCZsOroIN@FOsSDQfRS|HNdWnopSKlboNWtXU^MPxvDFXZtk^{?]@Tv^MCOFYObiP]ywVIZwayDiFCAhGsOugde`I_AtaFF?p?[qNtyFJa{fpTzWNfzR@WWoPSrTCryB_^|?|UdqS_X]YbvPMQ?raW|caTCE@iitHrqyLTHezJaq]}c@VLZ|vHthZx?kIQgqp}J|nXOBW]{d{MlKbTgCnlkRZU~_@EDv?Kd~yMB{ydUe?qnro~Lnora{wKJp{RArf|SAx?WiKfLv}f`ODLhWCevgbILqeaP~Ler~g~oXv@?vKoMjvVrjQRFpChcpSJ}?IOZmgvJj_PEr~CcleavtBoAryvGD?gx_@Aol|Eup[WD[d~uyVtJOyRFazH{ZLanXhEjm{nm^SoTLZjmWhiLHR}P_l^ATZkZjrZVeDZ`H_MlFkN`_SNjSY]ECg{supRVEitq@[JcTS[EBaNqi}?w]Znca[BXPtJNOz?MLuKY@bo{EKKNLgqdRgpQL{ajqETZ^E}R{NqI~L[qb_~J]VMurdWZTPA@I@lGXFnmPHvvlCmMQg@CeMz{aWdXjXzkRsWuuYRzLejb_HshBjVTiS[Lcnr}MBedXHgB]NZiFzjwPfLdqa]|l[J_[YB{AHsYS~sBGeCSGuY{mWRDWMhHP@U~AiAzMRHKWg]Ni]YSigzbtuwePpIeg?ODNwjIJuCL?j_F^UY[bwfFHY@AHQJ^abcTjFTdtDikAifKQWZ_XuGjYDMEhHVWnDYm@IiJZHX}rHOC`nq{D[~nABU~l}nJVjJhSlueXpcuamtYG~[gC]klYuAoFqsNuaOWa`O^VeNRPnSEg{ser`RWg{QK]uQryRZnsHyioSRBYrJ[{tSp?YDZeQi}dPsgouRgI|jS]SgkXlYkJtFTohRo[Iq}Pe?ZI@L}FV~[}ZbsToqgXYYAszHLarNiGmZYwN}ozb{_wYTn^o|DjPqoD?_boHaLJkcJIXVfQ@M[UqB@zJ}j{sogR[@srlv^L|`dqmcUwI?pWPAgCr@MsPAhx_qcKGhjWm}UHlLBHHYpk^OAIyKX|sLWGkHAlJ`DQzGTGywrqFs{[yv?e^OzURzQGEpuId]yDvK{GzrSosk]GhU?fTwoGJxpucYbNGZ~l{`ivS]rpcbFlSdx|Ft[ywwjgbxdOpGc|{nOklE@^Jyyt}x{gcD[hOnGjHxJHhMVtDNyBrbgGIC]NivuIBOD|{UFRrWPFA~dRlHoSA[Ci}DPHwpEkqTaFNHhsXDomVTXacxcd~KQfQMiEq~[XwJt?Ouf}GMMi}JLb|ue^KEJ~lNClrO@jVcFFfIbhQ{wfn_WGWsWANoovXdQhwbOleUWtYS}Tn`PCyZk|HPTDP[wZi}xjjOEEtjkxY[Lc}M^~N@osc_~?wd]{UJFuoICMyyPrFjKVGim?FCvzjXQ_QDZD`mWGhnk{p}QvXoGaWDGrOfWJvwLZ^taMlskaNk^|@ahn~SyUL]O^BtYY}HBDc^_?KvT]lWM]wGz~lqngmWrbbpnEMTJ~RUMdggc[}KQtkIL@PQsktF`|kQYREHFWdQaZYK{_Y?][ZfYOqnGnq~WaccfCKOCrrtCj_ZbqeUlH[Ym[F[vHLobzg?@cecaPzVAyKXXZCUEohMfW_HIa@mRbwtBM@XbsFmXLT}RYwbu]OcZo^l~XWWjc}^]b?iZqW@N]NWp~Vw}gSznUuLRJmWnbUeqvRDUp}h_z@cvGjclB}rM}_Zc[VrxeCoHC~pkVxWT?r_^TGNXJzXoRxu_fcy]sjQGoSmIWbgX@ciAhlAX`bzQDsofqXaNl|sObBOh{^WiVDs`vOPmJdpE_nWx|tKew^`vbHjK_Q]PIVg[Ae`iq_h`EWdN@oiFx]]h^MtuC@dufUQJtCJAIpxHz|h@DltLg]{}WrKyY_f^pp{{SZ^sAw~lA}v@l`HDVAsN~xGwx`CXoctR^qayliXXVCpsnoPqEVlInsyZkYdc~VeS^piT?abELzmkPZV{Gn^]MYISXvrtoRbxMjstEYCE{xJDAx}z_AQOrQc^k?DhXA`V?oQyU?FrbE[C]HTsOX[umk}QDQaO_~sKme]lkMTRoWdNCd|XUzqCNFopiTIYt`aVNdAqOjDPpvDv?bFRh`YpBbPXxHrW]CE}UgSEB`PghNjT?CjuafHZux{MEDtlpGUvWIhKMSWYkqtgaiYjDImeOiWsyE?O_Ekb}hH^}hEu[uPoaxOHd?wkaBYYk[aWXycWMSQIVa@oUzSf_g`}YQnegNkKdsciYfGsIn}zCbpdWSkNQ]H`ouUIdPr_^utOChWYOtCSDaj[[]WkeNEAZRhlA@JPaMRojIoKbok|~qmJo?ouBHIbz@e|XCQn{tSGt?OAyEbbH_nUH]gkT}OBsBdEfdVNrX?ZDZJR_aKVkCOT@OfSYTVd{cTCr`n@_yH~yN]XKQiNaoZ~UhXr?Zlrh[^ipjYy_c@aA|WXeLrK_oEf{?CYmfcIrmR}wd~MN}oWuz{edAcBosNknlUQE`JrDX}fi~[|_qoS]gLw^]fhJFvG_pTnVDHPitbHlS_ORS`}AKyBmehFCdgjGUbsShJ??_I_biuZPv?XuZBEr{HFMboot^?NKIp@KO`r`FwMXITHjTdjK?lAMYStn@hrMT{HKF{enk~R|`vju~NtXZXVB@T}FlvBJMRpcCMzIU|XFslynNphkDLDTONlv{aFaMIV~]SiwpqppeqF^}Odv|byYUYWRwRgmfIT@^QnB@lCKxdTwdWOG@c|~ZWiNU]S@JV?qtsROMr{GPKzrMmo~edzE@Dni_~DNkHutfDhhkQDdZuh~z`KlaBCowUO[LWPylfAv}|pdlPz`^FJewRp_gGSzBGiFq`CTL[?I|tH~~@yGqKBTSc|nybNc]wVDDbsFacOp{DH`W`Dvvs`Et?rmDxUfs@dFyl|]B|^CYiVjtnmDtLl@_ZnBxkmpYnt?K@^HUlvzyZSg?CL`V{trjUx`]{cTlmZ`huKo}dM[znrIwzdlkkuLcRfJE[UKGD^H?UnIuU}SaRkjB?S]LNkeOgTmxPTKNkp[|wL@ym`leR|sjSHIEI@hjVTrNQ?spL}usOXLPE{QtKwCB]TvlIbc^vIipk?puUptJ^e~jYH~usvNXlVLNKGjmI_zgSOqiovROQIiuis]UE`a{qOvICeTGcqrko?ppJw]pECao@tZWJZ]ZEACOlqgzpRbd[EO|TBRVCWRyNuYstAdC}oJJOke_rhrP{}TqtrCACtZBDQXaQp`hon^Ml[Ogdx}U?OsR`afe@BFdRMzHO@YiHTqFktdEyMLL]YI|DsvYSVYhydq]a{u{M?FbuRG]cgZMQzLFwYloLPP{LhxVELouNeefqDWycrdca|d_{BAtCB}BA[U]}oKbnJZiWv_ZlqkeYnm@S`LoBII]FhVAeVPavP]aDBoenIWcMw~mC~HVIv||yB@nxIzsoqJEFUhzGScIiM@uLZE~WAKdlA]kKFbJc?rmznhrf`Fhy~ZAZY`@srzKnRXHVouFALqa~LOMUPybM??Zivwuxll]faR}BTzCLDl^gArLrPY`]U{S~T_GdVh|E`QkgNGpF^zLNnBKyhE}YK`VLtJlWTlTOcSnv@|XIm_]ncKsgKRqV[ZI^oFRIZ^dH}tPwZBNnvJso{aAjOAF`koXsGqKcoJLEXCF@G]kCKgaFGpJjYILF|E}zaaP}We@|oSI|XwE[MOBqmVWpcrJgmYPrAeX`js@NuQHhqH]T]d[wEbkCqfuiXcHmtmS`]vUZlEceT}aidRihN?zN_aT^Uu`j^fbwy_SHGkEaVCD|hQi@lX{Vol}bEZsiEiM|z|~Rxb_LEhs|IrkqzrAkGmEY|sjydaDFAQrRwO[uFyiykkiFs}ExXvjsf@^pLgab_fnqDJxcsC}i~TwQKyCgCZJMcNWfcVC|~eQChMJJZK~ZCKAofEWW]DPn[V@s~okwxYkh~Qtd~LX]sZun?HSqVPod`z]lkT@RZvZdP?ZzYgcmWqn_L[fJqfxeMoY]EgCey`Ra`BHxcYfkjxe|H}{{EkVaInP}NPT_[I@Lrz`wri?iYCsvdbbRGIiqn]{JWai]v[oe`NmOBT~BTWigQn{Jn?pA{e^JbmrP]^Fob?xJ}OqKIs~LEUgjgwnHRIgOw|E{^aJ?fWF@lk_oKRvRj_JQdsLHxjSs?|~PYS]ZN~uFaJs?yAegOaREmuum^RSw|AlkiIzeDblz?d{q~ndkrCsilDVIgGJg|P@rDPEVtQl{ZpjKpwIQlcfF?h[mZBGHIdzJ{uZoJYancF?runYyIj_Wxbv}NG~`bH`rsFjrZbx}SsKxbrkEGwM|eU}]jWh|_QTIezxgcolpUb`ofBLbTuRvqdAElQtkmvO_EbVmgnzynWxYcTmr]VqVKg]Z]wkqrVkaP?}ApvIQG|HI_snDlZw?RaNg?DP^hZ]t^eoRdBhtPgCfJToOmGscG~bexvXUtvPOVJNxYdpSDELl|oZN|uepcXFp{Eea~`cVyHH{FZziLhzUj@@uj|oVIaRNlqVRN@W^bIA{[rGftUKNMM_@FFRvNZgNEaRqVmB@?B?}xKqx~vYxfmdjsAseLTtYVA[myj|@JcINLp{]@YHRvxh~lzwp`NDVK|dPsvZe@PcK|[YFwilalcEszbebIoPmNaA?mIfdiUPqYFueUhI?byASeuE?JloreKDKrD}ms~jeyAWchPYIk_fIb?kCoW~RtoA^ytoy~MA{MaQetrwzc?VMBSBJDH~lef_`wqDrmU~SFgcDmbq]Fdk`GjCYYZthA@X@nD`cryPj?uHkvefv_XrtkauNBWY|bWy@zkWqR}[wob{M^b^`CXEOZ]^zHKY{ePcZYqFTf^jFIsiVj@EGuPzllETK|QT?~HWxRSnV`@DnrbXmeTVQDKha{ql_`Y?QBZbSzfRbmv`NBFz|sQhH?VFkFsP^ZkiX|?o}v[uUR{^Zo]YiZ?SksnKvOAHcJHU][t~AQnjnZmcifUJ`oBixXWcK]?VMl?HmIq_DasV_dBNcagn{pnN_bfGhmuwI}}d^BNdKPXOZDSbJPVvi~tkA|XFr[un~|EOZ_^r]?IbVc`F?joXTu}gAvvKggiifM^q^jsx]cV?VPuvzwwftdImisOvpiB@yV@PFTGKZZGPZijsbxH[`YhQhZO~|lCh{e@znrQ`AYFdXL^mRGVDDsz[TKHqGMFLKD|RVjh]gY~o{d`CROEE{HCbvgw|D[{BuJTxILfwAMFVUkTIJSFaz_`rs]AciWuFAmRBI{Uo[d]yUj_n@eJKnGuVo|x{OUvl^ws|_zyovCTtV^B{o_`~C[|e?SrKExY`{|sgpZXg`[FhgIu?lnHxCuV?GPN@V]x[MgWjnsuRM|GM]Kp`CU@rt~AiCp{xQOFrD`ns_nPnwDebn]b]jKhcU|Dgscy~Dz}^@`}@td@ro?LLrG]W[z]DfT}ijcC]ntxogFvzcBSiYtZTwg{eZMqsSmaWFyIkPWXZt|pQO`_tMGQGS~^@cB?bWE?@ODZdE}?Xx@bByVHJ`BX{ha_foDmzBGWeZCAw|ISyuvV?|waIoWk|Yp{Tn~TXZfw~guqObi@{bLdHWTV[JoDKyYeOS{GxOUzfdgoWtYpuiUH`cw~Wx`aDV}W]BZNvcX`QOhrgXvasGFndgCCO^`s_^}affqOm~]sNvZd}Ae[ID}stBPBLtWCOoEr{TEqakSibOMOALtPoS]^`|yw{Zq@G}hY_Zippo]QWQ^bWun[@cCpkHUawL`qHIcSRH]uvyrU~NLcZ^]SKCUFNiEvlDpGY^ecE`jQfJvPCtSjK{pd@td{RS{tIJKu?@}RkEeH`T[t?Kvqm~HBw{[MlxZVkW]XQ~XG]zaaqrZ[KL@qUfFFTWeVxWeuDQ|qNONGa`njhckUOev[d^lgQ`KySTCtbLU[QK~bTuRFR^Q_EjjRM`{aLcJXn@EBdHYRmyDNmtZbFzzIHC|XuNJDoITCkcbTIAElpYWLo?EbMTp[}JiuO_kzCNib?BC]BhWo[aZJCbYV@AsKDQ_@cfAJmQoCh{nHKXAe`TjN~XtKCUS{cVmU~n}wGQsv]r|CSAGG?vsTGvukBqENOxCNCG~Qbc~HAXzw?RYQyxwmgdGOs?AozM[wRHifboWi[CIDNV~hmnaaXhfgJXK^TMqh}@mof_aXU_WIspI_pUsI{n{LEpcjutWKiTChsr~lMEN@lCeHrLStqjNGAhXomqzgC{UgPH{jkqKAQVExuICZEmfz{[sU_s]oHMtSNiESLgb{SEi^PpDUq|n}vIWo}dxzUR`[O}kxi|j}FNHMxH{|J}hITBxClJNSjLVxWNg`Hf~KZuF^qlmZm?Xqt`nz]G|J[S`CouP?JPG@iYj}Bil|AIFSPUaOzmoqpmpJyk^ZEtSr{vbQtas_mAosQXoUAQqPwpSci[c|dr{tCd@j]UgMX_[q[iow]@UYvujoT?NX~gd|fXOK~zUE_M?gETQWjsl`BwUAr_o~kEZqBAjO]rttyAhBzPb}FtLxZbkipQBF~eP|ftItJI@D@`x|BQGE{gBEdWTDLCv?RvPtOTvur|eNLEVN|q?fBSXk@QlwD[J~`{_R@f`BnEW@}xOSzxmiVTrT{HhIZ[}^rcnf]gsBa[EhxzOygwQbhCrUM^YtkfWUZbNEn{P^]YQKyRR^RwuPrB}OHQBF?EMMcGutTwJYE_so?OyWOPdQRKc[rSVN`QJ}loGmltc?qhIX@@WHhauLDQQPwoxi`N}l{tokTIS?vJFSz{Ut}D]KKYwTb[U[G^{SQUnz^M~BA^_|DoKGbzoJAQfI|}~aBTcFYtjDCy@KAOiOz]OKu}QdGKoWyOp^Mn~hvfFoMXaYHjXFvODlWYyLV|ZZ}qcIu]elehtIKlt@JDJk}LkIrkxtBxNPNC@OBqzSEf|~TV]hyLl]bl[WYq]RDopfRfCz@caP{Vq|PjeT@SLMbTOBP?MBG{xcgTWs}KuQMiqFMfOZ~k[UXajUVpSBnqBqdTbPDRv]SACrjQBsSOqJqPCLOzVvip[Pp_|IGi}b{KIj^?PHZbHFyOYieKrFFxdMdOAlCoIurqpRq]qBBwle}SbdtYtoVful|atOyBQPBmr[lkR}^{K|UAuQ?Ps}KeFdVd~ix`tsE]C@XypwH{MchCXETSAigS_bWGQmPFDBrxAVsnxPPnGvBlyoRdyyBwgSvS'",...']charCodeAtUinyxpf',"for(;e<36003;c[e++]=p-=128,A=A?p-A&&A:(p==34|p==39|p==96)&&p)for(p=1;p<128;y=f.map((n,x)=>(U=r[n]*2+1,U=Math.log(U/(h-U)),t-=a[x]*U,U/750)),t=~-h/(1+Math.exp(t))|1,i=o%h<t,o=o%h+(i?t:h-t)*(o>>15)-!i*t,f.map((n,x)=>(U=r[n]+=(i*h/2-r[n]<<15)/((C[n]+=C[n]<4)+1/20)>>15,a[x]+=y[x]*(i-t/h))),p=p*2+i)for(f='0102021032032104310531064206541098731098732'.split(t=0).map((n,x)=>(U=0,[...n].map((n,x)=>(U=U*997+(c[e-n]|0)|0)),h*128-1&U*997+p+!!A*129)*12+x);o<h*128;o=o*64|M.charCodeAt(d++)&63);for(C=String.fromCharCode(...c);r=/[\0-]/.exec(C);)with(C.split(r))C=join(shift());return C")([],[],1<<15,[0,0,0,0,0,0,0,0,0,0,0,0],new Uint16Array(51e6).fill(1<<13),new Uint8Array(51e6),0,0,0,0))</script>
+<!-- inline-end -->
+</body>
