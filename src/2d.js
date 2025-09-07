@@ -188,13 +188,13 @@ function drawSpeech(arr) {
     }
     // draw the photo in the speech bubble!!
     if (photo && !dialogImgFinished) {
-      cropImg(photo, photoWidth, photoHeight, x + (photoPadding / 2), y + (photoPadding / 2));
+      cropAndDrawImg(photo, photoWidth, photoHeight, x + (photoPadding / 2), y + (photoPadding / 2));
     }
   })
 }
 
 // https://stackoverflow.com/questions/26015497/how-to-resize-then-crop-an-image-with-canvas
-function cropImg(img, targetWidth, targetHeight, x, y) {
+function cropAndDrawImg(img, targetWidth, targetHeight, x, y, hasBorder) {
   const imgAspect = img.width / img.height;
   const boxAspect = targetWidth / targetHeight;
   let startX = 0;
@@ -216,6 +216,11 @@ function cropImg(img, targetWidth, targetHeight, x, y) {
     x, y, // dest x y
     targetWidth, targetHeight // dest width height
   );
+  if (hasBorder) {
+    ctx2D.strokeStyle = 'white';
+    ctx2D.lineWidth = 5;
+    ctx2D.strokeRect(x, y, targetWidth, targetHeight);
+  }
 }
 
 const timeToAppear = 1500;
@@ -226,6 +231,65 @@ function drawScene({ time, textArr, offset, hasPicture }) {
     let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
     drawSpeech(textArr.slice(0, currentIndex + 1));
   }
+  }
+
+let albumIndex = 0;
+function drawAlbum() {
+  // Draw current blob
+  const entry = allBlobs[albumIndex];
+  if (!albumImgLoaded) {
+    console.log(allBlobs)
+    setAlbumImage(entry.blob);
+  } else {
+    // add the picture with a frame
+    const computerPaddingX = 50;
+    const computerPaddingY = 80;
+    const computerWidth = canvas2D.width - computerPaddingX * 2;
+    const computerHeight = canvas2D.height - computerPaddingY * 2;
+    const targetWidth = computerWidth - computerPaddingX;
+    const targetHeight = computerHeight - computerPaddingY;
+    const x = computerPaddingX + (computerWidth - targetWidth) / 2;
+    // - 50 for the menu bar
+    const y = computerPaddingY + (computerHeight - targetHeight - 50) / 2;
+    cropAndDrawImg(albumImg, targetWidth, targetHeight, x, y, true);
+  }
+
+  // draw description centered at the bottom
+  const fontSize = 22;
+  ctx2D.font = `${fontSize}px monospace`;
+  ctx2D.textAlign = 'center';
+  ctx2D.textBaseline = 'bottom';
+  const textX = canvas2D.width / 2;
+  const textY = canvas2D.height - 90;
+  ctx2D.fillStyle = 'white';
+  ctx2D.fillText(entry.description, textX, textY);
+  // disclaimer
+  const disclaimerFontSize = 12;
+  ctx2D.font = `italic ${disclaimerFontSize}px monospace`;
+  const dTextX = canvas2D.width / 2;
+  const dTextY = canvas2D.height - 70;
+  ctx2D.fillStyle = 'white';
+  ctx2D.fillText("(use arrow keys to navigate)", dTextX, dTextY);
+}
+
+// Album navigation
+addEventListener('keydown', e => {
+  if (!gameOver) return; // only allow navigation in album mode
+  albumImgLoaded = false; // reset image loaded state
+  if (e.key === 'ArrowRight') {
+    albumIndex = (albumIndex + 1) % allBlobs.length;
+    drawAlbum();
+  } else if (e.key === 'ArrowLeft') {
+    albumIndex = (albumIndex - 1 + allBlobs.length) % allBlobs.length;
+    drawAlbum();
+  }
+});
+
+
+function drawGameOver() {
+  drawBackground();
+  drawComputer();
+  drawAlbum();
 }
 
 // lol just a little reminder to myself...
@@ -448,22 +512,42 @@ function setDialogImage(blob) {
   dialogImg.src = URL.createObjectURL(blob);
 }
 
+let albumImg = null;
+let albumImgLoaded = false;
+let albumImgFinished = false;
+
+function setAlbumImage(blob) {
+  albumImgLoaded = false;
+  albumImg = new Image();
+  albumImg.onload = function () {
+    albumImgLoaded = true;
+  };
+  albumImg.src = URL.createObjectURL(blob);
+}
+
 let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }];
 let arr2 = [{ text: 'lakjldkfjaaaaaaaaakjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }];
 let arr3 = [{ text: 'i need you to find my missing person', side: 'right' }, { text: 'can you do that for me?', side: 'left' }];
 
 
+let gameOver = false;
 function renderNextMission() {
   return function () {
+    if (missionIndex + 1 === missions.length) {
+      // end of game
+      gameOver = true;
+      renderedButtons = [];
+      return;
+    }
     // start transition from 2d to 3d
     canvas2D.classList.remove('show');
     transitionOffset = 0;
     isStartingGame = true;
-
+    
+    missionIndex++;
 
     // set up the next scene by resetting 3d properties
     window.gameState = 4;
-    missionIndex++;
     missionText.textContent = missions[missionIndex].text;
     zoomAmount = 0;
     badDog = null;
@@ -499,7 +583,7 @@ function render(time) {
       setTimeout(() => {
         canvas2D.classList.add("hidden");
       }, 500);
-      
+
       setTimeout(() => {
         gameUi.classList.remove('hide');
         gameUi.classList.remove('hidden');
@@ -511,13 +595,13 @@ function render(time) {
   }
 
   // dialog state!
-  if (window.gameState === 5) { // >= 5
+  if (window.gameState === 5) {
     // hide the 3d canvas
     document.getElementById('camera-ui').classList.add('hidden');
     document.getElementById('album').classList.add('hidden');
     document.getElementById('instructions').classList.add('hidden');
     canvas.classList.add('hidden');
-  
+
     // show the 2d
     canvas2D.classList.remove('hidden');
     canvas2D.classList.add('show');
@@ -536,16 +620,20 @@ function render(time) {
       drawScene({ textArr: [] });
       ctx2D.restore();
     } else {
-      handleReplyTimer(time, 3);
-
-      // nextMissionDialog
-      let missionComplete1Arr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another dog!', side: 'left' }];
-      drawScene({ time, textArr: missionComplete1Arr, offset: 0, hasPicture: true });
-      dialogTransitionOffset = 0;
-      if (reply) {
-        renderedButtons = [
-          drawButton({ text: 'ok???????????????????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
-        ];
+      if (gameOver) {
+        // end of game
+        drawGameOver();
+      } else {
+        handleReplyTimer(time, 3);
+        // nextMissionDialog
+        let missionComplete1Arr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another dog!', side: 'left' }];
+        drawScene({ time, textArr: missionComplete1Arr, offset: 0, hasPicture: true });
+        dialogTransitionOffset = 0;
+        if (reply) {
+          renderedButtons = [
+            drawButton({ text: 'ok???????????????????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
+          ];
+        }
       }
     }
   } else {
@@ -610,7 +698,10 @@ function render(time) {
   }
 
   fillButton();
-  drawPaw();
+  // maybe keep paw if we want to swat at the pictures lol
+  if (!gameOver) {
+    drawPaw();
+  }
 
   request = requestAnimationFrame(render);
 }
