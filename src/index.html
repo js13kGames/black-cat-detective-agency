@@ -69,7 +69,7 @@
             opacity: 1;
             transition: opacity 0.5s ease;
         }
- 
+
         .hidden {
             display: none !important;
         }
@@ -81,19 +81,42 @@
             width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            background: rgba(0, 0, 0, 0.09);
+            background: rgba(0, 0, 0, 0.25);
             pointer-events: none;
         }
 
-        #camera-border {
+        /* https://stackoverflow.com/questions/14387690/how-can-i-show-only-corner-borders */
+        #camera-border-small {
             position: absolute;
             left: 50%;
             top: 50%;
             width: 300px;
             height: 300px;
             transform: translate(-50%, -50%);
-            border: 2px solid #fff;
-            box-sizing: border-box;
+            background-size: 20px 20px;
+        }
+
+        #camera-border-large {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: calc(100vw - 100px);
+            height: calc(100vh - 100px);
+            margin: 50px;
+            background-size: 75px 75px;
+        }
+
+        .camera-border-background {
+            background-repeat: no-repeat;
+            background:
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to right, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to left, #fff 4px, transparent 4px) 100% 100%,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 0 0,
+                linear-gradient(to bottom, #fff 4px, transparent 4px) 100% 0,
+                linear-gradient(to top, #fff 4px, transparent 4px) 0 100%,
+                linear-gradient(to top, #fff 4px, transparent 4px) 100% 100%;
         }
 
         #plus {
@@ -115,7 +138,8 @@
     <!-- The phone! -->
     <canvas id="c2"></canvas>
     <div id="camera-ui" class="hidden">
-        <div id="camera-border"></div>
+        <div id="camera-border-large" class="camera-border-background"></div>
+        <div id="camera-border-small" class="camera-border-background"></div>
         <div id="plus">+</div>
     </div>
     <div id="album"></div>

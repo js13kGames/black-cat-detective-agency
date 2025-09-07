@@ -268,7 +268,7 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
   }
 
   // see if they took a picture of an obstacle!
-  if (!missReason) {
+  if (!missReason && !closestDog) {
     for (let obstacle of obstacles) {
       const [ox, oy, oz] = m4.transformPoint(obstacle.mvp, centerOfObject);
       const obstacleInView = ox >= -1 && ox <= 1 && oy >= -1 && oy <= 1 && oz >= 0 && oz <= 1;
@@ -279,7 +279,7 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
     }
   }
 
-  if (!missReason) {
+  if (!missReason && !closestDog) {
     // if they took a pic of the sun, scold them.
     const [sx, sy, sz] = m4.transformPoint(sunMvp, centerOfObject);
     const sunInView = sx >= -1 && sx <= 1 && sy >= -1 && sy <= 1 && sz >= 0 && sz <= 1;
@@ -1240,7 +1240,7 @@ const bushes = [
 ];
 const benches = [
   { tX: 12, tZ: -13, rotation: -45 * Math.PI / 180 },
-  // { tX: -15, tZ: -15, rotation: 45 * Math.PI / 180 },
+  { tX: -15, tZ: -15, rotation: 45 * Math.PI / 180 },
 ];
 
 // rendered dogs
@@ -1265,47 +1265,47 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  {
-    // test mission!!
-    targetBreed: ['westie'],
-    badAction: 'jump',
-    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
-    otherDogCount: 5,
-    text: 'Test Mission!',
-    redHerringCount: 0,
-  },
   // {
-  //   targetBreed: ['german', 'pug', 'westie'],
-  //   badAction: 'tailChase',
-  //   otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
-  //   otherDogCount: 6,
-  //   text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
+  //   // test mission!!
+  //   targetBreed: ['westie'],
+  //   badAction: 'jump',
+  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
+  //   otherDogCount: 5,
+  //   text: 'Test Mission!',
   //   redHerringCount: 0,
   // },
-  // {
-  //   targetBreed: null,
-  //   badAction: 'speed',
-  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   otherDogCount: 10,
-  //   text: 'Please take a picture of the dog running at full speed. It is very distracting!',
-  //   redHerringCount: 1,
-  // },
-  // {
-  //   targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   badAction: 'hotdog',
-  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-  //   otherDogCount: 20,
-  //   text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
-  //   redHerringCount: 3,
-  // },
-  // {
-  //   targetBreed: null,
-  //   badAction: 'jump',
-  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   otherDogCount: 25,
-  //   text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
-  //   redHerringCount: 2,
-  // },
+  {
+    targetBreed: ['german', 'pug', 'westie'],
+    badAction: 'tailChase',
+    otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
+    otherDogCount: 6,
+    text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
+    redHerringCount: 0,
+  },
+  {
+    targetBreed: null,
+    badAction: 'speed',
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 10,
+    text: 'Please take a picture of the dog running at full speed. It is very distracting!',
+    redHerringCount: 1,
+  },
+  {
+    targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
+    badAction: 'hotdog',
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+    otherDogCount: 20,
+    text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
+    redHerringCount: 3,
+  },
+  {
+    targetBreed: null,
+    badAction: 'jump',
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 25,
+    text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
+    redHerringCount: 2,
+  },
 ]
 
 // fill instructions with initial mission text
