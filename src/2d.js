@@ -471,7 +471,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-window.gameState = 3; // 0;
+window.gameState = 0;
 let reply = true;
 let start = null;
 
@@ -524,9 +524,9 @@ function setAlbumImage(blob) {
   albumImg.src = URL.createObjectURL(blob);
 }
 
-let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help urgently!' }];
-let arr2 = [{ text: 'lakjldkfjaaaaaaaaakjdjks', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat!' }, { text: "i need you to do something for me" }];
-let arr3 = [{ text: 'i need you to find my missing person', side: 'right' }, { text: 'can you do that for me?', side: 'left' }];
+let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help catching some unruly dogs in the act!' }];
+let arr2 = [{ text: 'ttghjikpp[[[[[[[llll;;;;;;;;;;;;;;,nb', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat.' }, { text: "are you up to the task?" }];
+let arr3 = [{ text: 'fffffff vbbnmm,,,,', side: 'right' }, { text: 'I will take that as a yes.', side: 'left' }];
 
 
 let gameOver = false;
@@ -627,13 +627,22 @@ function render(time) {
         drawGameOver();
       } else {
         handleReplyTimer(time, 3);
-        // nextMissionDialog
-        let missionComplete1Arr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another dog!', side: 'left' }];
-        drawScene({ time, textArr: missionComplete1Arr, offset: 0, hasPicture: true });
+        // standard dialog array
+        let missionTextArr = [];
+        let missionButtonText = 'let\'s go get them!';
+        if (missionIndex < missions.length - 1) {
+          missionTextArr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another bad dog...', side: 'left' }, {text: missions[missionIndex + 1].text, side: 'left'}];
+        } else {
+          // game over
+          missionButtonText = 'see my album!';
+          missionTextArr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' },{text: 'you\'ve caught every bad dog in the park.'}, { text: 'now you can look through your album of suspects', side: 'left'}];
+        }
+        //
+        drawScene({ time, textArr: missionTextArr, offset: 0, hasPicture: true });
         dialogTransitionOffset = 0;
         if (reply) {
           renderedButtons = [
-            drawButton({ text: 'ok???????????????????', fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
+            drawButton({ text: missionButtonText, fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
           ];
         }
       }
@@ -664,7 +673,7 @@ function render(time) {
     });
     if (reply) {
       renderedButtons = [
-        drawButton({ text: 'yeah it\'s me', fontSize: 35, onClick: renderNextScene(2), alignment: 'left' }),
+        drawButton({ text: 'yeah, it\'s me', fontSize: 35, onClick: renderNextScene(2), alignment: 'left' }),
         drawButton({ text: 'who\'s asking?', fontSize: 35, onClick: renderNextScene(2), alignment: 'right' })
       ];
     }
@@ -678,7 +687,7 @@ function render(time) {
     if (reply) {
       renderedButtons = [
         drawButton({ text: 'i don\'t work for free', fontSize: 35, onClick: renderNextScene(3), alignment: 'left' }),
-        drawButton({ text: 'hissssssssss', fontSize: 35, onClick: renderNextScene(3), alignment: 'right' })
+        drawButton({ text: 'hisssssssss', fontSize: 35, onClick: renderNextScene(3), alignment: 'right' })
       ];
     }
   } else if (window.gameState === 3 || window.gameState === 4) {
@@ -692,8 +701,7 @@ function render(time) {
     });
     if (reply) {
       renderedButtons = [
-        drawButton({ text: 'i need you to find my missing person', fontSize: 35, onClick: renderNextScene(4), alignment: 'left' }),
-        drawButton({ text: 'can you do that for me?', fontSize: 35, onClick: renderNextScene(4), alignment: 'right' })
+        drawButton({ text: 'let\'s find them!', fontSize: 35, onClick: renderNextScene(4), alignment: 'right' })
       ];
     }
     ctx2D.restore();

@@ -216,8 +216,8 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
       if (obstacleInView && oz < z && xDist < 0.3) {
         inView = false;
         // if (culprit.isBad) {
-        missReason = `A ${culprit.breedName} obstructed by an ${obstacle.name}`;
-        description = `A ${culprit.breedName} obstructed by an ${obstacle.name}`;
+        missReason = `that's the ${culprit.breedName}, but they're behind ${obstacle.name}`;
+        description = `A ${culprit.breedName} obstructed by ${obstacle.name}`;
         // }
       }
     }
@@ -231,12 +231,12 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
 
     if (tooFar) {
       if (culprit.isBad) {
-        missReason = `${culprit.breedName} is too far away`;
-        description = `A wide angle shot of ${culprit.dogName} the ${culprit.breedName}`;
+        missReason = `that's the ${culprit.breedName}, but they're too far away`;
+        description = `${culprit.dogName} the ${culprit.breedName} in the distance`;
       } else {
         // TODO: this is just debugging, but maybe add a message like "zoom in"
-        missReason = 'anything is too far away';
-        description = 'Something in the distance';
+        missReason = 'wow, this will look great in the "museum of stuff that\'s too far away"';
+        description = 'Something in the distance...';
       }
       continue;
     }
@@ -257,7 +257,7 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
 
         // if you did all that, but the dog isn't engaging in the bad action, then they are not the suspect
         if (culprit.isBad && (!culpritIsMisbehaving && culprit.badAction !== 'hotdog')) { // TODO: have perspective style bad action
-          missReason = `You got the right ${culprit.breedName} but they aren't engaging in the bad action!`;
+          missReason = `you got the right ${culprit.breedName} but they aren't doing anything bad!`;
           description = `${culprit.dogName} the ${culprit.breedName} being a good boy/girl`;
           continue;
         } else if (targetObject.mvp && culprit.isBad && culprit.badAction === 'hotdog') {
@@ -275,8 +275,8 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
           const tNorm = m4.normalize(toCamera);
           const dot = m4.dot(fNorm, tNorm);
           if (dot < 0 && Math.abs(dot) > 0.5) {
-            missReason = `You got the right ${culprit.breedName} but the hotdog isn't facing the camera!`;
-            description = `${culprit.dogName} the ${culprit.breedName} from a useless angle`;
+            missReason = `you got the right ${culprit.breedName}, but the hotdog isn't in the picture!`;
+            description = `${culprit.dogName} the ${culprit.breedName} running off with my hotdog`;
             continue;
           }
         }
@@ -288,10 +288,9 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
 
   // success if suspect dog is the captured dog!
   if (closestDog && closestDog.isBad) {
-    console.log('caught the suspect:', closestDog.breedName);
     description = `${closestDog.dogName}, a naughty ${closestDog.breedName}!`;
   } else if (closestDog) {
-    missReason = `You captured ${closestDog.dogName}, an innocent ${closestDog.breedName}!`;
+    missReason = `that's ${closestDog.dogName}, an innocent ${closestDog.breedName}!`;
     description = `${closestDog.dogName}, an innocent ${closestDog.breedName}`;
   }
 
@@ -301,7 +300,7 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
       const [ox, oy, oz] = m4.transformPoint(obstacle.mvp, centerOfObject);
       const obstacleInView = ox >= -1 && ox <= 1 && oy >= -1 && oy <= 1 && oz >= 0 && oz <= 1;
       if (obstacleInView) {
-        missReason = `What am I supposed to do with this picture of ${obstacle.name}?`;
+        missReason = `what am I supposed to do with this picture of ${obstacle.name}?`;
         description = obstacle.name
       }
     }
@@ -1294,47 +1293,47 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  {
-    // test mission!!
-    targetBreed: ['westie'],
-    badAction: 'jump',
-    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
-    otherDogCount: 5,
-    text: 'Test Mission!',
-    redHerringCount: 0,
-  },
   // {
-  //   targetBreed: ['german', 'pug', 'westie'],
-  //   badAction: 'tailChase',
-  //   otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
-  //   otherDogCount: 6,
-  //   text: 'Please take a picture of the dog chasing its own tail. It is very distracting!',
+  //   // test mission!!
+  //   targetBreed: ['westie'],
+  //   badAction: 'jump',
+  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
+  //   otherDogCount: 5,
+  //   text: 'Test Mission!',
   //   redHerringCount: 0,
   // },
-  // {
-  //   targetBreed: null,
-  //   badAction: 'speed',
-  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   otherDogCount: 10,
-  //   text: 'Please take a picture of the dog running at full speed. It is very distracting!',
-  //   redHerringCount: 1,
-  // },
-  // {
-  //   targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   badAction: 'hotdog',
-  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
-  //   otherDogCount: 20,
-  //   text: 'Please take a picture of who stole my hotdog. Make sure you get it\'s face!',
-  //   redHerringCount: 3,
-  // },
-  // {
-  //   targetBreed: null,
-  //   badAction: 'jump',
-  //   otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
-  //   otherDogCount: 25,
-  //   text: 'Please take a picture of the dog jumping in the air. It is very distracting!',
-  //   redHerringCount: 2,
-  // },
+  {
+    targetBreed: ['german', 'pug', 'westie'],
+    badAction: 'tailChase',
+    otherDogBreeds: ['lab', 'westie', 'dachshund', 'pug', 'lab', 'chihuahua'],
+    otherDogCount: 6,
+    text: 'Please find the dog who is chasing its own tail. It is very distracting!',
+    redHerringCount: 0,
+  },
+  {
+    targetBreed: null,
+    badAction: 'speed',
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 10,
+    text: 'Please find the dog running at full speed. It\'s making me nervous!',
+    redHerringCount: 1,
+  },
+  {
+    targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
+    badAction: 'hotdog',
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'westie', 'lab', 'german', 'chow'],
+    otherDogCount: 20,
+    text: 'Please find the dog who STOLE my hot dog. And sure you get their face!',
+    redHerringCount: 3,
+  },
+  {
+    targetBreed: null,
+    badAction: 'jump',
+    otherDogBreeds: ['golden', 'german', 'lab', 'chow', 'dachshund', 'pug', 'westie', 'chihuahua', 'jack'],
+    otherDogCount: 25,
+    text: 'Please find the dog who is jumping every so often. I\'m afraid they\'ll take off flying!',
+    redHerringCount: 2,
+  },
 ]
 
 // fill instructions with initial mission text
@@ -1509,7 +1508,7 @@ function render3D(time = 0) {
           albumElement.appendChild(document.createTextNode(' '));
           albumElement.appendChild(leftDiv);
           // response message
-          const textContent = `${missReason || 'you took a picture of nothing'}`;
+          const textContent = `${missReason || 'great. you took a picture of nothing.'}`;
           rightDiv = document.createElement('div');
           rightDiv.classList.add('text');
           rightDiv.classList.add('left-text');
@@ -1534,7 +1533,7 @@ function render3D(time = 0) {
         document.exitPointerLock();
         window.gameState = 5;
         // caughtDogBlob = blob;
-        photoDialog = `You got the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
+        photoDialog = `you caught the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
         dialogOpen = true;
         cameraMode = false;
       });
