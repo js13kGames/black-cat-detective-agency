@@ -9,18 +9,6 @@ const gameUi = document.getElementById("c");
 cameraUI.classList.add("hidden");
 gameUi.classList.add("hidden");
 
-// TODO: use object colors :)
-const gray = "rgba(218, 215, 215, 1)";
-const clawGray = "rgba(201, 191, 191, 1)";
-const mouseGray = "rgba(167, 157, 157, 1)";
-const white = "rgba(255, 255, 255, 1)";
-const pawPink = "rgba(253, 187, 220, 1)";
-const furBlack = "rgba(49, 47, 47, 1)";
-const slime = "rgba(123, 250, 166, 1)"
-const lighterPurple = "rgba(201, 207, 247, 1)";
-const lightPurple = "rgba(179, 188, 243, 1)";
-const darkPurple = "rgba(116, 109, 195, 1)";
-
 
 function drawBackground() {
   // using the size of the canvas, we can figure out how many boxes to draw
@@ -30,7 +18,7 @@ function drawBackground() {
   const numBoxesY = Math.ceil(canvas2D.height / boxSize);
   for (let i = 0; i < numBoxesX; i++) {
     for (let j = 0; j < numBoxesY; j++) {
-      ctx2D.fillStyle = (i + j) % 2 === 0 ? white : gray;
+      ctx2D.fillStyle = (i + j) % 2 === 0 ? convertColorToRgba(colors.white) : convertColorToRgba(colors.gray);
       ctx2D.fillRect(i * boxSize, j * boxSize, boxSize, boxSize);
     }
   }
@@ -61,13 +49,13 @@ function handleMouseMove(e) {
 
 function drawComputer() {
   // draw the computer screen
-  ctx2D.fillStyle = lightPurple;
+  ctx2D.fillStyle = convertColorToRgba(colors.lightPurple);
   const computerHeight = canvas2D.height - 50;
   const computerWidth = canvas2D.width - 50;
   ctx2D.fillRect(25, 25, computerWidth, computerHeight);
 
   // draw the toolbar
-  ctx2D.fillStyle = darkPurple;
+  ctx2D.fillStyle = convertColorToRgba(colors.darkPurple);
   ctx2D.fillRect(25, 25, computerWidth, 50);
 
   // add the title! :)
@@ -78,9 +66,9 @@ function drawComputer() {
   ctx2D.fillText("Black Cat Detective Agency", 200, 50);
 
   // draw x box
-  ctx2D.fillStyle = lightPurple;
+  ctx2D.fillStyle = convertColorToRgba(colors.lightPurple);
   ctx2D.fillRect(computerWidth - 10, 35, 30, 30);
-  ctx2D.fillStyle = darkPurple;
+  ctx2D.fillStyle = convertColorToRgba(colors.darkPurple);
   ctx2D.font = "20px monospace";
   ctx2D.textAlign = "center";
   ctx2D.textBaseline = "middle";
@@ -104,7 +92,7 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
 
   const button = new Path2D();
   button.rect(x, y, width, height);
-  ctx2D.fillStyle = darkPurple;
+  ctx2D.fillStyle = convertColorToRgba(colors.darkPurple);
   ctx2D.fill(button);
   // add the text
   ctx2D.fillStyle = 'white';
@@ -114,7 +102,7 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
   ctx2D.fillText(text, x + width / 2, y + height / 2);
 
   // add a border
-  ctx2D.strokeStyle = lighterPurple;
+  ctx2D.strokeStyle = convertColorToRgba(colors.lighterPurple);
   ctx2D.lineWidth = 5;
   ctx2D.strokeRect(x, y, width, height);
 
@@ -124,7 +112,7 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
 // https://stackoverflow.com/questions/62270509/javascript-is-it-possible-to-animate-the-fillrect-of-a-shape-in-a-canvas
 function fillButton() {
   if (!activeButton) return;
-  ctx2D.fillStyle = slime;
+  ctx2D.fillStyle = convertColorToRgba(colors.buttonSlime);
   ctx2D.fillRect(activeButton.x, activeButton.y + activeButton.height - Math.min(fillNum, activeButton.height), activeButton.width, Math.min(fillNum, activeButton.height));
   fillNum += activeButton.height * 0.01;
   if (fillNum >= activeButton.height + 25) { // some buffer to let it chill for a sec
@@ -183,7 +171,7 @@ function drawSpeech(arr) {
     if (text) {
       // add the text
       ctx2D.font = `${fontSize}px monospace`;
-      ctx2D.fillStyle = darkPurple;
+      ctx2D.fillStyle = convertColorToRgba(colors.darkPurple, 0.8);
       ctx2D.fillText(text, x + width / 2, y + height / 2);
     }
     // draw the photo in the speech bubble!!
@@ -299,7 +287,7 @@ function drawPaw() {
   // if swatCount is high bring out the claws >:) 
   if (swatCount >= 250) {
     // left claws
-    ctx2D.fillStyle = clawGray;
+    ctx2D.fillStyle = convertColorToRgba(colors.clawGray);
     ctx2D.beginPath();
     // top center
     ctx2D.moveTo(mouseX - 45, mouseY - mouseOffset - heightOffset - 100);
@@ -311,7 +299,7 @@ function drawPaw() {
     ctx2D.fill();
 
     // left claw
-    ctx2D.fillStyle = clawGray;
+    ctx2D.fillStyle = convertColorToRgba(colors.clawGray);
     ctx2D.beginPath();
     // top center
     ctx2D.moveTo(mouseX - 95, mouseY - mouseOffset - heightOffset - 50);
@@ -323,7 +311,7 @@ function drawPaw() {
     ctx2D.fill();
 
     // right claws
-    ctx2D.fillStyle = clawGray;
+    ctx2D.fillStyle = convertColorToRgba(colors.clawGray);
     ctx2D.beginPath();
     // top center
     ctx2D.moveTo(mouseX + 45, mouseY - mouseOffset - heightOffset - 100);
@@ -335,7 +323,7 @@ function drawPaw() {
     ctx2D.fill();
 
     // right claw
-    ctx2D.fillStyle = clawGray;
+    ctx2D.fillStyle = convertColorToRgba(colors.clawGray);
     ctx2D.beginPath();
     // top center
     ctx2D.moveTo(mouseX + 95, mouseY - mouseOffset - heightOffset - 50);
@@ -348,15 +336,15 @@ function drawPaw() {
   }
 
   // this is the arm part- it starts at the bottom!
-  ctx2D.fillStyle = furBlack;
+  ctx2D.fillStyle = convertColorToRgba(colors.furBlack);
   ctx2D.fillRect(mouseX - 100, mouseY - mouseOffset - heightOffset, 200, canvas2D.height - (mouseY - mouseOffset - heightOffset));
 
   // this is the paw (one bigger box)
-  ctx2D.fillStyle = furBlack;
+  ctx2D.fillStyle = convertColorToRgba(colors.furBlack);
   ctx2D.fillRect(mouseX - 70, mouseY - mouseOffset - heightOffset - 45, 140, 100);
 
   // this is the center paw pad
-  ctx2D.fillStyle = pawPink;
+  ctx2D.fillStyle = convertColorToRgba(colors.pawPink);
   const centerPadSize = 75;
   const centerXPos = mouseX - centerPadSize / 2;
   const centerYPos = mouseY - mouseOffset - centerPadSize / 2;
@@ -364,7 +352,7 @@ function drawPaw() {
 
   // this is the rest of the paw pads
   const littlePadSize = 35;
-  ctx2D.fillStyle = pawPink;
+  ctx2D.fillStyle = convertColorToRgba(colors.pawPink);
   // left middle pad
   ctx2D.fillRect(centerXPos - littlePadSize - 8, centerYPos + littlePadSize - 50, littlePadSize, littlePadSize);
   // left right pad
@@ -414,7 +402,7 @@ function drawMouse() {
 
   // draw mouse at starting place
   // fun fact i'm using the same raindrop shape that I used in my first js13k game!! :) :) :) 
-  ctx2D.fillStyle = mouseGray;
+  ctx2D.fillStyle = convertColorToRgba(colors.mouseGray);
   ctx2D.beginPath();
   ctx2D.moveTo(-20, 0);
   ctx2D.lineTo(0, -40);
@@ -424,7 +412,7 @@ function drawMouse() {
   ctx2D.fill();
 
   // add ears
-  ctx2D.fillStyle = mouseGray;
+  ctx2D.fillStyle = convertColorToRgba(colors.mouseGray);
   const size = 10;
   ctx2D.beginPath();
   ctx2D.arc(-15, -15, size, 0, Math.PI * 2);
@@ -435,13 +423,13 @@ function drawMouse() {
   ctx2D.fill();
 
   // nose
-  ctx2D.fillStyle = furBlack;
+  ctx2D.fillStyle = convertColorToRgba(colors.furBlack);
   ctx2D.beginPath();
   ctx2D.arc(0, -40, 2, 0, Math.PI * 2);
   ctx2D.fill();
 
   // tail
-  ctx2D.strokeStyle = mouseGray;
+  ctx2D.strokeStyle = convertColorToRgba(colors.mouseGray);
   ctx2D.lineWidth = 3;
   ctx2D.beginPath();
   ctx2D.moveTo(0, 20);
@@ -471,7 +459,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-let gameState = 0;
+let gameState = 3;// 0;
 let reply = true;
 let start = null;
 

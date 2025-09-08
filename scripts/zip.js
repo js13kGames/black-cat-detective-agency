@@ -24,7 +24,7 @@ try {
     // 1. Copy files into a buffer
     let buffer = '';
     // note: order matters here!
-    const filePaths = ['m4.js', 'utils.js', '2d.js', 'object.js', '3d.js'];
+    const filePaths = ['ui-init.js', 'm4.js', 'utils.js', 'webgl-setup.js', 'object.js', '2d.js', '3d.js'];
     for (const filePath of filePaths) {
         const file = path.join(originalDir, filePath);
         // make sure the file is a .js file!
@@ -79,14 +79,14 @@ try {
 
     // inline <script> tags
     const html = fs.readFileSync('build/index.html', 'utf8');
-    // TODO: testing with the unminified version. update to min!
-    // const finalScript = 'main.js'; // main.min.js
-    const fullScript =  fs.readFileSync(path.join(outputDir, 'main.min.js'), 'utf8');
+    const finalScript = 'main.min.js';
+    const fullScript =  fs.readFileSync(path.join(outputDir, finalScript), 'utf8');
     const inlineScript = `<script>${fullScript}</script>`;
     const newHtml = html.replace(
         /<!--\s*inline-start\s*-->[\s\S]*?<!--\s*inline-end\s*-->/,
         `<!-- inline-start -->\n${inlineScript}\n<!-- inline-end -->`
     );
+
     // overwrite index.html
     fs.writeFileSync('build/index.html', newHtml, 'utf8');
 

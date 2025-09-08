@@ -1,81 +1,3 @@
-/* Setup Shaders */
-// see: https://webglfundamentals.org/webgl/lessons/webgl-shaders-and-glsl.html
-// shaders are written in GLSL (OpenGL Shading Language)
-const vertexShader = `
-  attribute vec3 a_position;
-  attribute vec3 a_normal;
-  uniform mat4 u_mvp;
-  uniform mat4 u_world;
-  uniform mat4 u_worldInverseTranspose;
-
-  varying vec3 v_normal;
-  varying vec3 v_surfaceToLight;
-  varying vec3 v_surfaceToView;
-
-  uniform vec3 u_lightWorldPos;
-  uniform mat4 u_viewInverse;
-
-  void main() {
-    // Multiply the position by the matrix.
-    gl_Position = u_mvp * vec4(a_position, 1.0);
-
-    // orient the normals and pass to the fragment shader
-    v_normal = mat3(u_worldInverseTranspose) * a_normal;
-
-    // compute the world position of the surface
-    vec3 surfaceWorldPos = (u_world * vec4(a_position, 1.0)).xyz;
-
-    // compute the vector of the surface to the light
-    // and pass it to the fragment shader
-    v_surfaceToLight = u_lightWorldPos - surfaceWorldPos;
-
-    // compute the vector of the surface to the view/camera
-    // and pass it to the fragment shader
-    v_surfaceToView = (u_viewInverse[3].xyz) - surfaceWorldPos;
-  }
-`;
-
-const fragmentShader = `
-  precision mediump float;
-  
-  // Passed in from the vertex shader.
-  varying vec3 v_normal;
-  // ...
-  varying vec3 v_surfaceToLight;
-  varying vec3 v_surfaceToView;
-  uniform vec4 u_color;
-  uniform vec4 u_lightColor;
-
-  void main() {
-    vec3 normal = normalize(v_normal);
-    vec3 surfaceToLight = normalize(v_surfaceToLight);
-
-    // Flat diffuse, softened
-    float diffuse = max(dot(normal, surfaceToLight), 0.0) * 0.8;
-    // Ambient term for base color
-    float ambient = 0.8;
-
-    vec3 color = u_color.rgb * (ambient + diffuse) * u_lightColor.rgb;
-    gl_FragColor = vec4(color, u_color.a);
-  }
-`;
-
-/* Setup WebGL context and shaders */
-const canvas = document.getElementById('c');
-const gl = canvas.getContext('webgl');
-
-
-// add listener to resize the canvas to fit the window
-function resize3d() {
-  webglUtils.resizeCanvasToDisplaySize(gl.canvas, Math.min(devicePixelRatio || 1, 2));
-  // gl viewport will cover the entire canvas so things don't get stretched and what not
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-}
-
-addEventListener('resize', resize3d);
-// call resize initially
-resize3d();
-
 // this will enable depth testing which has to do with z-fighting!!
 gl.enable(gl.DEPTH_TEST);
 
@@ -165,10 +87,6 @@ addEventListener('keydown', e => {
   pitch = Math.max(-pitchLimit, Math.min(pitch, pitchLimit));
 });
 
-
-/* Setup WebGL program */
-const programInfo = webglUtils.createProgramInfo(gl, [vertexShader, fragmentShader]);
-gl.useProgram(programInfo.program);
 
 
 /* this is the frustum test */
@@ -471,66 +389,7 @@ const dogParts = [
   },
 ];
 
-// the cube buffer we will use to create everything!
-const positions = [
-  // Front face
-  -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
 
-  // Back face
-  -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5,
-
-  // Top face
-  -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
-
-  // Bottom face
-  -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5,
-
-  // Right face
-  0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5,
-
-  // Left face
-  -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
-];
-const normal = [
-  // Front face
-  0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-
-  // Back face
-  0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
-
-  // Top face
-  0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-
-  // Bottom face
-  0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-
-  // Right face
-  1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-
-  // Left face
-  -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-
-]
-const indices = [
-  // front
-  0, 1, 2, 0, 2, 3,
-  // back
-  4, 5, 6, 4, 6, 7,
-  // top
-  8, 9, 10, 8, 10, 11,
-  // bottom
-  12, 13, 14, 12, 14, 15,
-  // right
-  16, 17, 18, 16, 18, 19,
-  // left
-  20, 21, 22, 20, 22, 23,
-];
-const cube = webglUtils.createBufferInfoFromArrays(gl, {
-  position: { numComponents: 3, data: positions },
-  normal: { numComponents: 3, data: normal },
-  indices: { numComponents: 3, data: indices },
-});
-// end of cube code
 
 function updatePosition(dogState, time, badAction) {
   // // debugging
@@ -625,7 +484,7 @@ function updatePosition(dogState, time, badAction) {
     const treeDepth = 1;
     const dx = dogState.pos[0] - tree.tX;
     const dz = dogState.pos[2] - tree.tZ;
-    if (Math.abs(dx) < treeWidth && Math.abs(dz) < treeDepth) {     
+    if (Math.abs(dx) < treeWidth && Math.abs(dz) < treeDepth) {
       dogState.direction += 100 * (Math.PI / 180); // rotate 90 degrees!
       // nudge dog outside the tree if they get stuck :\
       if (Math.abs(dx) < treeWidth) {
@@ -787,9 +646,6 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
     // need to update worlds arr so the parent transforms are applied
     world[i] = partMatrix;
     let obj = drawObject({
-      gl,
-      projection,
-      programInfo,
       view,
       world: world[i],
       tX: offset[0],
@@ -857,9 +713,6 @@ function drawRoseBush(gl, programInfo, projection, view, pos, roseColor) {
     roseWorld = m4.scale(roseWorld, scaleX, 0.1, scaleZ);
 
     drawObject({
-      gl,
-      projection,
-      programInfo,
       view,
       world: roseWorld,
       tX: 0,
@@ -898,22 +751,19 @@ function drawBench(gl, programInfo, projection, view, pos, rotation) {
     sZ: 1,
     color: colors.woodBrown
   });
-  
+
   // draw the legs positions
   const legPos = [
-  [-0.9, -0.225, -0.3], // front left
-  [ 0.9, -0.225, -0.3], // front right
-  [-0.9, -0.225,  0.3], // back left
-  [ 0.9, -0.225,  0.3], // back right
+    [-0.9, -0.225, -0.3], // front left
+    [0.9, -0.225, -0.3], // front right
+    [-0.9, -0.225, 0.3], // back left
+    [0.9, -0.225, 0.3], // back right
   ];
   legPos.forEach(pos => {
-  let legWorld = m4.copy(seatWorld);
-  legWorld = m4.translate(legWorld, pos[0] / 2, pos[1] / 0.2, pos[2] / 0.6);
-  legWorld = m4.scale(legWorld, 0.1, 1.25, 0.3333);
+    let legWorld = m4.copy(seatWorld);
+    legWorld = m4.translate(legWorld, pos[0] / 2, pos[1] / 0.2, pos[2] / 0.6);
+    legWorld = m4.scale(legWorld, 0.1, 1.25, 0.3333);
     drawObject({
-      gl,
-      projection,
-      programInfo,
       view,
       world: legWorld,
       tX: 0,
@@ -944,7 +794,7 @@ function drawBench(gl, programInfo, projection, view, pos, rotation) {
     sZ: 1,
     // backrest color (slightly darker)
     color: [colors.woodBrown[0] - 5 / 255, colors.woodBrown[1] - 5 / 255, colors.woodBrown[2] - 5 / 255, 1.0]
-  }); 
+  });
   return seatMvp;
 };
 
@@ -964,9 +814,6 @@ function drawHotdog(gl, world, programInfo, projection, view, pos) {
     programInfo,
     view,
     world: bunWorld,
-    tX: 0,
-    tY: 0,
-    tZ: 0,
     sX: 1,
     sY: 1,
     sZ: 1,
@@ -977,117 +824,28 @@ function drawHotdog(gl, world, programInfo, projection, view, pos) {
   let hotdogWorld = m4.copy(bunWorld);
   hotdogWorld = m4.translate(hotdogWorld, 0, .1, 0);
   hotdogWorld = m4.scale(hotdogWorld, 1.25, 1, .5);
-  drawObject({
-    gl,
-    projection,
-    programInfo,
-    view,
-    world: hotdogWorld,
-    tX: 0,
-    tY: 0,
-    tZ: 0,
-    sX: 1,
-    sY: 1,
-    sZ: 1,
-    color: colors.redBrown
-  });
 
   // mustard (child of bun too)
   let mustardWorld = m4.copy(bunWorld);
   mustardWorld = m4.translate(mustardWorld, 0, .6, 0);
   mustardWorld = m4.scale(mustardWorld, 1.1, .1, .1);
-  drawObject({
+
+  drawHierarchicalObjects([{
+    world: hotdogWorld,
+    color: colors.redBrown
+  },
+  {
+    world: mustardWorld,
+    color: colors.yellow
+  }], {
     gl,
     projection,
     programInfo,
     view,
-    world: mustardWorld,
-    tX: 0,
-    tY: 0,
-    tZ: 0,
-    sX: 1,
-    sY: 1,
-    sZ: 1,
-    color: colors.yellow
   });
 
   return bunMvp;
-
-  // was gonna do a dotted line but it looked bad but maybe something for roses? :)
-  // for (let i = 0; i < 4; i++) {
-
-  //   drawObject({
-  //     gl,
-  //     projection,
-  //     programInfo,
-  //     view,
-  //     world: null,
-  //     tX: pos[0],
-  //     tY: pos[1] + 0.01,
-  //     // start at the beginning of the hot dog then move along z axis a bit!
-  //     tZ: pos[2] - dDepth / 2 + (i * (dDepth / 3)),
-  //     sX: 0.005,
-  //     sY: 0.0025,
-  //     sZ: .001,
-  //     color: colors.yellow,
-  //   });
-  // }
 }
-
-
-
-function drawObject({ gl, projection, programInfo, view, world, tX, tY, tZ, sX, sY, sZ, color }) {
-  webglUtils.setBuffersAndAttributes(gl, programInfo, cube);
-
-  // this is for stationary objects with no movement logic!
-  if (!world) {
-    world = m4.identity();
-    // translate before scaling
-    world = m4.translate(world, tX, tY, tZ);
-  }
-  // scale object
-  world = m4.scale(world, sX, sY, sZ);
-
-  const worldInverseTranspose = m4.transpose(m4.inverse(world));
-  // this is the matrix that is returned by this function
-  const mvp = m4.multiply(projection, m4.multiply(view, world));
-  webglUtils.setUniforms(programInfo, {
-    u_mvp: mvp,
-    u_world: world,
-    u_worldInverseTranspose: worldInverseTranspose,
-    u_lightWorldPos: [-50, 30, 100],
-    u_viewInverse: view,
-    u_lightColor: [1, 1, 1, 1],
-    u_color: color,
-  });
-  webglUtils.drawBufferInfo(gl, cube);
-  return mvp;
-}
-
-const colors = {
-  slime: [99 / 255, 205 / 255, 134 / 255, 1],
-  brown: [139 / 255, 69 / 255, 19 / 255, 1],
-  purple: [128 / 255, 0, 128 / 255, 1],
-  default: [0.8, 0.6, 0.3, 1.0],
-  black: [0, 0, 0, 1],
-  darkGray: [69 / 255, 69 / 255, 69 / 255, 1],
-  yellow: [255 / 255, 255 / 255, 0, 1],
-  white: [255 / 255, 255 / 255, 255 / 255, 1],
-  lightBrown: [203 / 255, 167 / 255, 121 / 255, 1],
-  lightTan: [253 / 255, 233 / 245, 207 / 232, 1],
-  golden: [245 / 255, 204 / 255, 127 / 255, 1],
-  blue: [68 / 255, 100 / 255, 159 / 255, 1],
-  redBrown: [132 / 255, 41 / 255, 17 / 255, 1],
-  tawny: [119 / 255, 68 / 255, 42 / 255, 1],
-  frostingPink: [255 / 255, 213 / 255, 213 / 255, 1],
-  doughBrown: [242 / 255, 188 / 255, 118 / 255, 1],
-  red: [1, 0, 0, 1],
-  ivyGreen: [75 / 255, 96 / 255, 61 / 255, 1],
-  roseRed: [190 / 255, 30 / 255, 45 / 255, 1],
-  rosePink: [255 / 255, 105 / 255, 180 / 255, 1],
-  woodBrown: [101 / 255, 67 / 255, 33 / 255, 1],
-};
-
 
 // the base dog state
 const dogState = {
@@ -1278,8 +1036,6 @@ let targetObject = {
   pos: null,
 };
 
-let fieldOfViewInRadians = 60 * Math.PI / 180; // how wide the camera's view is (1.0471975511965976 radians -> 60 degrees)
-
 
 /* dialog Logic */
 let photoDialog = '';
@@ -1290,15 +1046,15 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  // {
-  //   // test mission!!
-  //   targetBreed: ['westie'],
-  //   badAction: 'jump',
-  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
-  //   otherDogCount: 5,
-  //   text: 'Test Mission!',
-  //   redHerringCount: 0,
-  // },
+  {
+    // test mission!!
+    targetBreed: ['westie'],
+    badAction: 'hotdog',
+    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
+    otherDogCount: 5,
+    text: 'Test Mission!',
+    redHerringCount: 0,
+  },
   {
     targetBreed: ['german', 'pug', 'westie'],
     badAction: 'tailChase',
@@ -1373,13 +1129,6 @@ function render3D(time = 0) {
 
   }
 
-  // This creates the projection matrix for the camera by mapping 3d coordinates into 2d clip space.
-  // So, anything outside of the frustum will not be rendered!
-  const viewportAspect = gl.canvas.width / gl.canvas.height;
-  const nearPlane = 0.1; // the nearest distance we can see
-  const farPlane = 100; // the farthest distance we can see
-  const projection = m4.perspective(fieldOfViewInRadians, viewportAspect, nearPlane, farPlane);
-
 
   // draw the ground
   drawGround(gl, view, projection);
@@ -1390,10 +1139,7 @@ function render3D(time = 0) {
     projection,
     programInfo,
     view,
-    world: null,
-    tX: 0,
     tY: 20,
-    tZ: 0,
     sX: 4,
     sY: 4,
     sZ: 4,
@@ -1423,7 +1169,7 @@ function render3D(time = 0) {
     // draw the parts and save the mvp for the frustum test
     let hotDogMvp = drawHotdog(gl, hotDogMatrix, programInfo, projection, view, [0, 0, 0]);
     if (!targetObject.mvp) {
-      targetObject = {mvp: hotDogMvp, pos: [badDog.pos[0], badDog.pos[1] + 1.5 * badDog.scale, badDog.pos[2] + 2.75 * badDog.scale]};
+      targetObject = { mvp: hotDogMvp, pos: [badDog.pos[0], badDog.pos[1] + 1.5 * badDog.scale, badDog.pos[2] + 2.75 * badDog.scale] };
     }
   }
 
@@ -1492,7 +1238,7 @@ function render3D(time = 0) {
         document.getElementById('text-messages').classList.remove('hidden');
         // clear album element
         albumElement.innerHTML = '';
-        allBlobs.push({blob, description });
+        allBlobs.push({ blob, description });
         const leftDiv = document.createElement('div');
         leftDiv.classList.add('text');
         leftDiv.classList.add('right-text');
@@ -1526,7 +1272,7 @@ function render3D(time = 0) {
         canvas.classList.add('hidden');
         // clear album element
         albumElement.innerHTML = '';
-        allBlobs.push({blob, description });
+        allBlobs.push({ blob, description });
         setDialogImage(blob)
         document.exitPointerLock();
         gameState = 5;
