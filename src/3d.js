@@ -540,7 +540,7 @@ function updatePosition(dogState, time, badAction) {
 // for the photo album at the end! :) 
 let allBlobs = [];
 let timeSceneStarted = 0;
-function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDog) {
+function drawDog(view, dogState, badAction, isBadDog) {
   const time = performance.now() / 1000;
 
   // intermittent bad actions (TODO: make bad actions object with anim functions like dog parts!)
@@ -594,6 +594,7 @@ function drawDog(gl, programInfo, projection, view, dogState, badAction, isBadDo
 
     // for any breed-specific modifications!
     let modifiedScale = [];
+
     if (dogState.modifications) {
       // Torso mods (update torso and children)
       if (dogState.modifications.torso > 0 && part.name === 'torso') {
@@ -1046,15 +1047,15 @@ const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "P
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
-  {
-    // test mission!!
-    targetBreed: ['westie'],
-    badAction: 'hotdog',
-    otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
-    otherDogCount: 5,
-    text: 'Test Mission!',
-    redHerringCount: 0,
-  },
+  // {
+  //   // test mission!!
+  //   targetBreed: ['westie'],
+  //   badAction: 'hotdog',
+  //   otherDogBreeds: ['golden', 'dachshund', 'dachshund', 'dachshund', 'chihuahua', 'pug', 'jack', 'lab', 'german', 'chow'],
+  //   otherDogCount: 5,
+  //   text: 'Test Mission!',
+  //   redHerringCount: 0,
+  // },
   {
     targetBreed: ['german', 'pug', 'westie'],
     badAction: 'tailChase',
@@ -1150,7 +1151,7 @@ function render3D(time = 0) {
   let startIndex = prevMission ? prevMission.otherDogCount + 1 : 0;
   // make the bad dog >:) 
   badDog = badDog ?? generateBaseDog(currentMission.targetBreed, startIndex, true);
-  const badDogMvp = drawDog(gl, programInfo, projection, view, badDog, currentMission.badAction, true);
+  const badDogMvp = drawDog(view, badDog, currentMission.badAction, true);
   allDogs.push({ mvp: badDogMvp, ...badDog, isBad: true, badAction: currentMission.badAction });
 
 
@@ -1182,7 +1183,7 @@ function render3D(time = 0) {
       // give the dog a badAction!
       redHerringAction = redHerringActions[i % redHerringActions.length];
     }
-    let dogMvp = drawDog(gl, programInfo, projection, view, dog, redHerringAction, false);
+    let dogMvp = drawDog(view, dog, redHerringAction, false);
     allDogs.push({ mvp: dogMvp, ...dog, isBad: false });
   });
 

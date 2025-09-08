@@ -134,8 +134,8 @@ function drawStart() {
   drawMouse();
   // add the start button
   const onClick = () => isStartingGame = true;
-  renderedButtons = [drawButton({ text: 'Start', fontSize: 85, onClick })];
-}
+  setButtons([{ text: 'Start', fontSize: 85, onClick }]);
+};
 
 function drawSpeech(arr) {
   let textContainsPhoto = false;
@@ -459,7 +459,7 @@ let transitionOffset = null;
 let dialogTransitionOffset = null;
 let isStartingGame = false;
 // debug scene gamestate 
-let gameState = 3;// 0;
+let gameState = 0;
 let reply = true;
 let start = null;
 
@@ -555,6 +555,11 @@ function safariFix() {
   canvas2D.style.visibility = 'visible';
 }
 
+
+function setButtons(buttons) {
+  renderedButtons = buttons.map(b => drawButton(b));
+}
+
 function render(time) {
   safariFix();
 
@@ -638,13 +643,10 @@ function render(time) {
           missionButtonText = 'see my album!';
           missionTextArr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' },{text: 'you\'ve caught every bad dog in the park.'}, { text: 'now you can look through your album of suspects', side: 'left'}];
         }
-        //
         drawScene({ time, textArr: missionTextArr, offset: 0, hasPicture: true });
         dialogTransitionOffset = 0;
         if (reply) {
-          renderedButtons = [
-            drawButton({ text: missionButtonText, fontSize: 35, onClick: renderNextMission(), alignment: 'right' })
-          ];
+          setButtons([{ text: missionButtonText, onClick: renderNextMission(), alignment: 'right' }]);
         }
       }
     }
@@ -673,10 +675,10 @@ function render(time) {
       offset: 0
     });
     if (reply) {
-      renderedButtons = [
-        drawButton({ text: 'yeah, it\'s me', fontSize: 35, onClick: renderNextScene(2), alignment: 'left' }),
-        drawButton({ text: 'who\'s asking?', fontSize: 35, onClick: renderNextScene(2), alignment: 'right' })
-      ];
+      setButtons([
+        { text: 'yeah, it\'s me', onClick: renderNextScene(2), alignment: 'left' },
+        { text: 'who\'s asking?', onClick: renderNextScene(2), alignment: 'right' }
+      ]);
     }
   } else if (gameState === 2) {
     handleReplyTimer(time, arr2.length);
@@ -686,10 +688,10 @@ function render(time) {
       offset: arr1.length - 1,
     });
     if (reply) {
-      renderedButtons = [
-        drawButton({ text: 'i don\'t work for free', fontSize: 35, onClick: renderNextScene(3), alignment: 'left' }),
-        drawButton({ text: 'hisssssssss', fontSize: 35, onClick: renderNextScene(3), alignment: 'right' })
-      ];
+      setButtons([
+        { text: 'i don\'t work for free', onClick: renderNextScene(3), alignment: 'left' },
+        { text: 'hisssssssss', onClick: renderNextScene(3), alignment: 'right' }
+      ]);
     }
   } else if (gameState === 3 || gameState === 4) {
     handleReplyTimer(time, arr3.length);
@@ -701,9 +703,9 @@ function render(time) {
       offset: arr1.length + arr2.length - 1,
     });
     if (reply) {
-      renderedButtons = [
-        drawButton({ text: 'let\'s find them!', fontSize: 35, onClick: renderNextScene(4), alignment: 'right' })
-      ];
+      setButtons([
+        { text: 'let\'s find them!', onClick: renderNextScene(4), alignment: 'right' }
+      ]);
     }
     ctx2D.restore();
   }

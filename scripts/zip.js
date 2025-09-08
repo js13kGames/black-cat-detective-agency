@@ -24,7 +24,7 @@ try {
     // 1. Copy files into a buffer
     let buffer = '';
     // note: order matters here!
-    const filePaths = ['ui-init.js', 'm4.js', 'utils.js', 'webgl-setup.js', 'object.js', '2d.js', '3d.js'];
+    const filePaths = ['ui-init.js', 'm4.js', 'utils.js', 'webgl-setup.js', 'colors.js', 'object.js', '2d.js', '3d.js'];
     for (const filePath of filePaths) {
         const file = path.join(originalDir, filePath);
         // make sure the file is a .js file!
@@ -39,7 +39,9 @@ try {
 
     // output combined file
     const mainFile = path.join(outputDir, 'main.js');
-    fs.writeFileSync(mainFile, buffer, { flag: 'w+' });
+    // wrapping everything in an IIFE so I can use Closure Compiler hopefully
+    const wrappedBuffer = `(function(){\n${buffer}\n})();\n`;
+    fs.writeFileSync(mainFile, wrappedBuffer, { flag: 'w+' });
 
     const outputFile = path.join(outputDir, 'main.min.js');
 
@@ -48,7 +50,7 @@ try {
     // The Closure Compiler parses, analyses, and compiles js to produce optimized code.
     // I think it does deeper/more thoughtful analysis than uglify and does more advanced optimizations.
     console.log('Running Closure Compiler...');
-    child_process.execSync(`npx google-closure-compiler --js=${mainFile} --js_output_file=${outputFile} --compilation_level=SIMPLE --warning_level=VERBOSE --jscomp_off=* --assume_function_wrapper`, { stdio: 'inherit' });
+    child_process.execSync(`npx google-closure-compiler --js=${mainFile} --js_output_file=${outputFile} --compilation_level=ADVANCED --warning_level=VERBOSE --jscomp_off=* --assume_function_wrapper`, { stdio: 'inherit' });
 
     // 2b. uglifyBuildStep
     // uglifyJS is a JavaScript minifier that compresses js code even further
