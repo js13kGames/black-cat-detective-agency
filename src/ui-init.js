@@ -70,3 +70,14 @@ function createTextMessages() {
 createCameraUI();
 createInstructions();
 createTextMessages();
+
+// elements
+const cameraUI = document.getElementById('camera-ui');
+const instructions = document.getElementById('instructions');
+const textMessages = document.getElementById('text-messages');
+const canvas2D = document.getElementById("c2");
+const gameUI = document.getElementById("c");
+
+// setup contexts
+const gl = gameUI.getContext('webgl');
+const ctx2D = canvas2D.getContext("2d");

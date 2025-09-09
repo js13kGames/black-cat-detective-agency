@@ -1,28 +1,11 @@
 'use strict';
 
+// add styles!!!
+document.head.appendChild(document.createElement('style')).textContent = `canvas,#c,#c2{width:100vw;height:100vh;position:absolute}#c{display:block}#c2{background:repeating-linear-gradient(19deg,#fff 0 25px,#dad7d7 25px 50px);background-size:50px 50px;animation:checker-scroll 2s linear infinite}@keyframes checker-scroll{0%{background-position:0 0}100%{background-position:50px 0}}html,body{margin:0;height:100%;font-family:'Courier New',monospace}ul{padding-inline-start:15px}#instructions,#text-messages{position:absolute;padding:10px;z-index:10;height:90vh}#instructions{top:10px;left:10px}#text-messages{top:10px;right:10px}.screenshot{width:285px;object-fit:cover;margin:5px;border:2px solid #fff}.hide{opacity:0;transition:opacity .5s ease}.hidden{display:none!important}#camera-ui{position:absolute;left:0;top:0;width:100vw;height:100vh;box-sizing:border-box;background:rgb(0 0 0/.25);pointer-events:none}#camera-border-small{position:absolute;left:50%;top:50%;width:300px;height:300px;transform:translate(-50%,-50%);background:linear-gradient(to right,#fff 4px,transparent 4px) 0 0,linear-gradient(to right,#fff 4px,transparent 4px) 0 100%,linear-gradient(to left,#fff 4px,transparent 4px) 100% 0,linear-gradient(to left,#fff 4px,transparent 4px) 100% 100%,linear-gradient(to bottom,#fff 4px,transparent 4px) 0 0,linear-gradient(to bottom,#fff 4px,transparent 4px) 100% 0,linear-gradient(to top,#fff 4px,transparent 4px) 0 100%,linear-gradient(to top,#fff 4px,transparent 4px) 100% 100%;background-repeat:no-repeat;background-size:20px 20px}#camera-border-large{position:absolute;left:0;top:0;width:calc(100vw - 100px);height:calc(100vh - 100px);margin:50px;background:linear-gradient(to right,#fff 4px,transparent 4px) 0 0,linear-gradient(to right,#fff 4px,transparent 4px) 0 100%,linear-gradient(to left,#fff 4px,transparent 4px) 100% 0,linear-gradient(to left,#fff 4px,transparent 4px) 100% 100%,linear-gradient(to bottom,#fff 4px,transparent 4px) 0 0,linear-gradient(to bottom,#fff 4px,transparent 4px) 100% 0,linear-gradient(to top,#fff 4px,transparent 4px) 0 100%,linear-gradient(to top,#fff 4px,transparent 4px) 100% 100%;background-repeat:no-repeat;background-size:75px 75px}#plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:100px;color:#fff}.text{color:#746dc3;width:300px;background:rgb(255 255 255/.95);padding:10px;margin-bottom:10px;font-size:22px}.left-text,.right-text{position:relative;width:300px}.left-text::before,.right-text::before{content:"";position:absolute;top:0;width:10px;height:10px;background:#fff}.left-text::before{left:-9px}.right-text::before{right:-10px}.instruction-block{padding:10px;margin-bottom:10px;font-size:22px;max-width:300px;background-color:#cfd5fd;color:#746dc3;border:5px solid rgb(201 207 247)}.instruction-title{background:#746dc3;color:#fff;padding:5px;font-weight:700;margin:-10px -10px 10px -10px}`;
+
 // 2d canvas controls
-let canvas2D = document.getElementById("c2");
-let ctx2D = canvas2D.getContext("2d");
-
-const cameraUI = document.getElementById("camera-ui");
-const gameUi = document.getElementById("c");
 cameraUI.classList.add("hidden");
-gameUi.classList.add("hidden");
-
-
-function drawBackground() {
-  // using the size of the canvas, we can figure out how many boxes to draw
-  const boxSize = 25;
-  // can also use ctx height too
-  const numBoxesX = Math.ceil(canvas2D.width / boxSize);
-  const numBoxesY = Math.ceil(canvas2D.height / boxSize);
-  for (let i = 0; i < numBoxesX; i++) {
-    for (let j = 0; j < numBoxesY; j++) {
-      ctx2D.fillStyle = (i + j) % 2 === 0 ? convertColorToRgba(colors.white) : convertColorToRgba(colors.gray);
-      ctx2D.fillRect(i * boxSize, j * boxSize, boxSize, boxSize);
-    }
-  }
-}
+gameUI.classList.add("hidden");
 
 // because the canvas takes up the entire screen, we don't need to account for the specific canvas position
 // We can just use the client coordinates! But if we did, we'd have to account for the relative position.
@@ -274,7 +257,6 @@ addEventListener('keydown', e => {
 
 
 function drawGameOver() {
-  drawBackground();
   drawComputer();
   drawAlbum();
 }
@@ -495,6 +477,7 @@ function setDialogImage(blob) {
   dialogImg = new Image();
   dialogImg.onload = function () {
     dialogImgLoaded = true;
+    URL.revokeObjectURL(dialogImg.src); // free memory
   };
   dialogImg.src = URL.createObjectURL(blob);
 }
@@ -551,7 +534,6 @@ function safariFix() {
   if (gl && gl.finish) gl.finish();
   canvas2D.width = canvas2D.width;
   webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
-  drawBackground();
   canvas2D.style.visibility = 'visible';
 }
 
@@ -564,7 +546,6 @@ function render(time) {
   safariFix();
 
   ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
-  drawBackground();
 
   if (isStartingGame) {
     transitionOffset += 40;
@@ -591,124 +572,18 @@ function render(time) {
       }, 500);
 
       setTimeout(() => {
-        gameUi.classList.remove('hide');
-        gameUi.classList.remove('hidden');
-        gameUi.classList.add('show');
+        gameUI.classList.remove('hide');
+        gameUI.classList.remove('hidden');
+        gameUI.classList.add('show');
         if (!cameraMode) {
-          document.getElementById('text-messages').classList.remove('hidden');
-          document.getElementById('instructions').classList.remove('hidden');
+          textMessages.classList.remove('hidden');
+          instructions.classList.remove('hidden');
         }
       }, 500);
     }
   }
 
-  // dialog state!
-  if (gameState === 5) {
-    // hide the 3d canvas
-    document.getElementById('camera-ui').classList.add('hidden');
-    document.getElementById('text-messages').classList.add('hidden');
-    document.getElementById('instructions').classList.add('hidden');
-    canvas.classList.add('hidden');
-
-    // show the 2d
-    canvas2D.classList.remove('hidden');
-    canvas2D.classList.add('show');
-    setTimeout(() => {
-      canvas2D.classList.remove('hide');
-    }, 100);
-
-    if (dialogTransitionOffset === null) {
-      dialogTransitionOffset = canvas2D.width;
-      startReplyTimer(time);
-    }
-    dialogTransitionOffset -= 40;
-    if (dialogTransitionOffset > 0) {
-      ctx2D.save();
-      ctx2D.translate(dialogTransitionOffset, 0);
-      drawScene({ textArr: [] });
-      ctx2D.restore();
-    } else {
-      if (gameOver) {
-        // end of game
-        drawGameOver();
-      } else {
-        handleReplyTimer(time, 3);
-        // standard dialog array
-        let missionTextArr = [];
-        let missionButtonText = 'let\'s go get them!';
-        if (missionIndex < missions.length - 1) {
-          missionTextArr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' }, { text: 'now I need you to catch another bad dog...', side: 'left' }, {text: missions[missionIndex + 1].text, side: 'left'}];
-        } else {
-          // game over
-          missionButtonText = 'see my album!';
-          missionTextArr = [{ photo: dialogImg, side: 'right' }, { text: photoDialog, side: 'left' },{text: 'you\'ve caught every bad dog in the park.'}, { text: 'now you can look through your album of suspects', side: 'left'}];
-        }
-        drawScene({ time, textArr: missionTextArr, offset: 0, hasPicture: true });
-        dialogTransitionOffset = 0;
-        if (reply) {
-          setButtons([{ text: missionButtonText, onClick: renderNextMission(), alignment: 'right' }]);
-        }
-      }
-    }
-  } else {
-    dialogTransitionOffset = null;
-  }
-
-  // start
-  if (gameState === 0) {
-    if (transitionOffset === null) {
-      transitionOffset = 0;
-    }
-    if (transitionOffset > 0) {
-      ctx2D.save();
-      ctx2D.translate(transitionOffset, 0);
-      drawStart();
-      ctx2D.restore();
-    } else {
-      drawStart();
-    }
-  } else if (gameState === 1) {
-    handleReplyTimer(time, arr1.length);
-    drawScene({
-      time,
-      textArr: arr1,
-      offset: 0
-    });
-    if (reply) {
-      setButtons([
-        { text: 'yeah, it\'s me', onClick: renderNextScene(2), alignment: 'left' },
-        { text: 'who\'s asking?', onClick: renderNextScene(2), alignment: 'right' }
-      ]);
-    }
-  } else if (gameState === 2) {
-    handleReplyTimer(time, arr2.length);
-    drawScene({
-      time,
-      textArr: [...arr1, ...arr2],
-      offset: arr1.length - 1,
-    });
-    if (reply) {
-      setButtons([
-        { text: 'i don\'t work for free', onClick: renderNextScene(3), alignment: 'left' },
-        { text: 'hisssssssss', onClick: renderNextScene(3), alignment: 'right' }
-      ]);
-    }
-  } else if (gameState === 3 || gameState === 4) {
-    handleReplyTimer(time, arr3.length);
-    ctx2D.save();
-    ctx2D.translate(transitionOffset, 0);
-    drawScene({
-      time,
-      textArr: [...arr1, ...arr2, ...arr3],
-      offset: arr1.length + arr2.length - 1,
-    });
-    if (reply) {
-      setButtons([
-        { text: 'let\'s find them!', onClick: renderNextScene(4), alignment: 'right' }
-      ]);
-    }
-    ctx2D.restore();
-  }
+  dialog(time)
 
   fillButton();
   // maybe keep paw if we want to swat at the pictures lol

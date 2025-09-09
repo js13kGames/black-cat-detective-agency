@@ -496,53 +496,6 @@ function copy(src, dst) {
   return dst;
 }
 
-/**
- * Multiply by an z rotation matrix
- * @param {Matrix4} m matrix to multiply
- * @param {number} angleInRadians amount to rotate
- * @param {Matrix4} [dst] optional matrix to store result
- * @return {Matrix4} dst or a new matrix if none provided
- * @memberOf module:webgl-3d-math
- */
-function zRotate(m, angleInRadians, dst) {
-  // This is the optimized version of
-  // return multiply(m, zRotation(angleInRadians), dst);
-  dst = dst || new MatType(16);
-
-  var m00 = m[0 * 4 + 0];
-  var m01 = m[0 * 4 + 1];
-  var m02 = m[0 * 4 + 2];
-  var m03 = m[0 * 4 + 3];
-  var m10 = m[1 * 4 + 0];
-  var m11 = m[1 * 4 + 1];
-  var m12 = m[1 * 4 + 2];
-  var m13 = m[1 * 4 + 3];
-  var c = Math.cos(angleInRadians);
-  var s = Math.sin(angleInRadians);
-
-  dst[0] = c * m00 + s * m10;
-  dst[1] = c * m01 + s * m11;
-  dst[2] = c * m02 + s * m12;
-  dst[3] = c * m03 + s * m13;
-  dst[4] = c * m10 - s * m00;
-  dst[5] = c * m11 - s * m01;
-  dst[6] = c * m12 - s * m02;
-  dst[7] = c * m13 - s * m03;
-
-  if (m !== dst) {
-    dst[8] = m[8];
-    dst[9] = m[9];
-    dst[10] = m[10];
-    dst[11] = m[11];
-    dst[12] = m[12];
-    dst[13] = m[13];
-    dst[14] = m[14];
-    dst[15] = m[15];
-  }
-
-  return dst;
-}
-
 
 /**
  * normalizes a vector.
@@ -592,19 +545,18 @@ function subtractVectors(a, b, dst) {
 }
 
 let m4 = {
-  transformPoint: transformPoint,
-  identity: identity,
-  transpose: transpose,
-  multiply: multiply,
-  xRotate: xRotate,
-  yRotate: yRotate,
-  translate: translate,
-  perspective: perspective,
-  scale: scale,
-  inverse: inverse,
-  copy: copy,
-  zRotate: zRotate, // was experimenting with rollover, may not need!
-  normalize: normalize,
-  dot: dot,
-  subtractVectors: subtractVectors,
+  transformPoint,
+  identity,
+  transpose,
+  multiply,
+  xRotate,
+  yRotate,
+  translate,
+  perspective,
+  scale,
+  inverse,
+  copy,
+  normalize,
+  dot,
+  subtractVectors,
 }

@@ -1,3 +1,4 @@
+
 /* Setup Shaders */
 // see: https://webglfundamentals.org/webgl/lessons/webgl-shaders-and-glsl.html
 // shaders are written in GLSL (OpenGL Shading Language)
@@ -60,10 +61,8 @@ const fragmentShader = `
   }
 `;
 
-/* Setup WebGL context */
+/* Setup WebGL */
 
-const canvas = document.getElementById('c');
-const gl = canvas.getContext('webgl');
 const programInfo = webglUtils.createProgramInfo(gl, [vertexShader, fragmentShader]);
 gl.useProgram(programInfo.program);
 

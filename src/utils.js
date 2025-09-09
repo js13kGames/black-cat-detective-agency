@@ -462,7 +462,7 @@ function getNumElementsFromNonIndexedArrays(arrays) {
   const numComponents = getNumComponents(array, key);
   const numElements = length / numComponents;
   if (length % numComponents > 0) {
-    throw new Error(`numComponents ${numComponents} not correct for length ${length}`);
+    throw new Error();
   }
   return numElements;
 }
@@ -754,11 +754,7 @@ function createAugmentedTypedArray(numComponents, numElements, opt_type) {
  */
 function error(msg) {
   if (topWindow.console) {
-    if (topWindow.console.error) {
-      topWindow.console.error(msg);
-    } else if (topWindow.console.log) {
-      topWindow.console.log(msg);
-    }
+    console.error(msg);
   }
 }
 
@@ -871,7 +867,7 @@ function createAttributeSetters(gl, program) {
             gl.vertexAttrib1fv(index, b.value);
             break;
           default:
-            throw new Error('the length of a float constant value must be between 1 and 4!');
+            throw new Error();
         }
       } else {
         gl.bindBuffer(gl.ARRAY_BUFFER, b.buffer);
@@ -988,7 +984,6 @@ function setAttributes(setters, attribs) {
 
 const webglUtils = {
   resizeCanvasToDisplaySize,
-  createProgramInfo,
   createProgramInfo,
   createBufferInfoFromArrays,
   setBuffersAndAttributes,
