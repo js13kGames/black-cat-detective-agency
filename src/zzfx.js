@@ -15,3 +15,6 @@ e?a/e:a<e+m?1-(a-e)/m*(1-w):a<e+m+r?w:a<h-c?(h-a-c)/t*w:0),f=c?f/2+(c>a?0:(a<h-c
 H++),g+=x+x*E*Z(a**5),n&&++n>z&&(b+=v,C+=v,n=0),!l||++I%l||(b=C,u=G,n=n||1);p=zzfxX.
 createBuffer(1,h,R);p.getChannelData(0).set(k);b=zzfxX.createBufferSource();
 b.buffer=p;b.connect(zzfxX.destination);b.start()};
+
+const cameraSound = () => zzfx(...[,,539,0,.04,.29,1,1.92,,,567,.02,.02,,,,.04]);
+const cameraOnSound = () => zzfx(...[,,9220,.01,,,,5,,,,,,9])

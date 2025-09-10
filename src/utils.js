@@ -41,13 +41,6 @@ function loadShader(gl, shaderSource, shaderType, opt_errorCallback) {
 
   // Check the compile status
   const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (!compiled) {
-    // Something went wrong during compilation; get the error
-    const lastError = gl.getShaderInfoLog(shader);
-    errFn('*** Error compiling shader \'' + shader + '\':' + lastError + `\n` + shaderSource.split('\n').map((l, i) => `${i + 1}: ${l}`).join('\n'));
-    gl.deleteShader(shader);
-    return null;
-  }
 
   return shader;
 }
@@ -161,147 +154,22 @@ function createProgramInfo(
  * @memberOf module:webgl-utils
  */
 function createUniformSetters(gl, program) {
-  let textureUnit = 0;
-
-  /**
-   * Creates a setter for a uniform of the given program with it's
-   * location embedded in the setter.
-   * @param {WebGLProgram} program
-   * @param {WebGLUniformInfo} uniformInfo
-   * @returns {function} the created setter.
-   */
-  function createUniformSetter(program, uniformInfo) {
-    const location = gl.getUniformLocation(program, uniformInfo.name);
-    const type = uniformInfo.type;
-    // Check if this uniform is an array
-    const isArray = (uniformInfo.size > 1 && uniformInfo.name.substr(-3) === '[0]');
-    if (type === gl.FLOAT && isArray) {
-      return function (v) {
-        gl.uniform1fv(location, v);
-      };
-    }
-    if (type === gl.FLOAT) {
-      return function (v) {
-        gl.uniform1f(location, v);
-      };
-    }
-    if (type === gl.FLOAT_VEC2) {
-      return function (v) {
-        gl.uniform2fv(location, v);
-      };
-    }
-    if (type === gl.FLOAT_VEC3) {
-      return function (v) {
-        gl.uniform3fv(location, v);
-      };
-    }
-    if (type === gl.FLOAT_VEC4) {
-      return function (v) {
-        gl.uniform4fv(location, v);
-      };
-    }
-    if (type === gl.INT && isArray) {
-      return function (v) {
-        gl.uniform1iv(location, v);
-      };
-    }
-    if (type === gl.INT) {
-      return function (v) {
-        gl.uniform1i(location, v);
-      };
-    }
-    if (type === gl.INT_VEC2) {
-      return function (v) {
-        gl.uniform2iv(location, v);
-      };
-    }
-    if (type === gl.INT_VEC3) {
-      return function (v) {
-        gl.uniform3iv(location, v);
-      };
-    }
-    if (type === gl.INT_VEC4) {
-      return function (v) {
-        gl.uniform4iv(location, v);
-      };
-    }
-    if (type === gl.BOOL) {
-      return function (v) {
-        gl.uniform1iv(location, v);
-      };
-    }
-    if (type === gl.BOOL_VEC2) {
-      return function (v) {
-        gl.uniform2iv(location, v);
-      };
-    }
-    if (type === gl.BOOL_VEC3) {
-      return function (v) {
-        gl.uniform3iv(location, v);
-      };
-    }
-    if (type === gl.BOOL_VEC4) {
-      return function (v) {
-        gl.uniform4iv(location, v);
-      };
-    }
-    if (type === gl.FLOAT_MAT2) {
-      return function (v) {
-        gl.uniformMatrix2fv(location, false, v);
-      };
-    }
-    if (type === gl.FLOAT_MAT3) {
-      return function (v) {
-        gl.uniformMatrix3fv(location, false, v);
-      };
-    }
-    if (type === gl.FLOAT_MAT4) {
-      return function (v) {
-        gl.uniformMatrix4fv(location, false, v);
-      };
-    }
-    if ((type === gl.SAMPLER_2D || type === gl.SAMPLER_CUBE) && isArray) {
-      const units = [];
-      for (let ii = 0; ii < info.size; ++ii) {
-        units.push(textureUnit++);
-      }
-      return function (bindPoint, units) {
-        return function (textures) {
-          gl.uniform1iv(location, units);
-          textures.forEach(function (texture, index) {
-            gl.activeTexture(gl.TEXTURE0 + units[index]);
-            gl.bindTexture(bindPoint, texture);
-          });
-        };
-      }(getBindPointForSamplerType(gl, type), units);
-    }
-    if (type === gl.SAMPLER_2D || type === gl.SAMPLER_CUBE) {
-      return function (bindPoint, unit) {
-        return function (texture) {
-          gl.uniform1i(location, unit);
-          gl.activeTexture(gl.TEXTURE0 + unit);
-          gl.bindTexture(bindPoint, texture);
-        };
-      }(getBindPointForSamplerType(gl, type), textureUnit++);
-    }
-    throw ('unknown type: 0x' + type.toString(16)); // we should never get here.
-  }
-
   const uniformSetters = {};
   const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-
-  for (let ii = 0; ii < numUniforms; ++ii) {
-    const uniformInfo = gl.getActiveUniform(program, ii);
-    if (!uniformInfo) {
-      break;
+  for (let i = 0; i < numUniforms; ++i) {
+    const info = gl.getActiveUniform(program, i);
+    if (!info) break;
+    let name = info.name;
+    if (name.endsWith('[0]')) name = name.slice(0, -3);
+    const loc = gl.getUniformLocation(program, info.name);
+    switch (info.type) {
+      case gl.FLOAT: uniformSetters[name] = v => gl.uniform1f(loc, v); break;
+      case gl.FLOAT_VEC2: uniformSetters[name] = v => gl.uniform2fv(loc, v); break;
+      case gl.FLOAT_VEC3: uniformSetters[name] = v => gl.uniform3fv(loc, v); break;
+      case gl.FLOAT_VEC4: uniformSetters[name] = v => gl.uniform4fv(loc, v); break;
+      case gl.FLOAT_MAT4: uniformSetters[name] = v => gl.uniformMatrix4fv(loc, false, v); break;
+      // Add more types if you use them!
     }
-    let name = uniformInfo.name;
-    // remove the array suffix.
-    if (name.substr(-3) === '[0]') {
-      name = name.substr(0, name.length - 3);
-    }
-    const setter = createUniformSetter(program, uniformInfo);
-    uniformSetters[name] = setter;
   }
   return uniformSetters;
 }
@@ -461,9 +329,6 @@ function getNumElementsFromNonIndexedArrays(arrays) {
   const length = getArray(array).length;
   const numComponents = getNumComponents(array, key);
   const numElements = length / numComponents;
-  if (length % numComponents > 0) {
-    throw new Error();
-  }
   return numElements;
 }
 
@@ -866,8 +731,6 @@ function createAttributeSetters(gl, program) {
           case 1:
             gl.vertexAttrib1fv(index, b.value);
             break;
-          default:
-            throw new Error();
         }
       } else {
         gl.bindBuffer(gl.ARRAY_BUFFER, b.buffer);
@@ -899,7 +762,6 @@ function getGLTypeForTypedArray(gl, typedArray) {
   if (typedArray instanceof Int32Array) { return gl.INT; }             // eslint-disable-line
   if (typedArray instanceof Uint32Array) { return gl.UNSIGNED_INT; }    // eslint-disable-line
   if (typedArray instanceof Float32Array) { return gl.FLOAT; }           // eslint-disable-line
-  throw 'unsupported typed array type';
 }
 
 // This is really just a guess. Though I can't really imagine using

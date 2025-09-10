@@ -68,8 +68,8 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
         missReason = `that's the ${culprit.breedName}, but they're too far away`;
         description = `${culprit.dogName} the ${culprit.breedName} in the distance`;
       } else {
-        missReason = 'wow, this will look great in the "museum of stuff that\'s too far away"';
-        description = 'Something in the distance...';
+        missReason = 'wow, this will look great in the "museum of stuff that\'s far away"';
+        description = 'Something far away';
       }
       continue;
     }
@@ -81,12 +81,12 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
       }
 
       if (culprit.isBad && (!culpritIsMisbehaving && culprit.badAction !== 'hotdog')) {
-        missReason = `you got the right ${culprit.breedName} but they aren't doing anything bad!`;
-        description = `${culprit.dogName} the ${culprit.breedName} being a good boy/girl`;
+        missReason = `that's the right ${culprit.breedName} but they aren't doing anything!`;
+        description = `${culprit.dogName} the ${culprit.breedName} being a good dog`;
         continue;
       } else if (targetObject.mvp && culprit.isBad && culprit.badAction === 'hotdog') {
         if (isFacingCamera(culprit, view)) {
-          missReason = `you got the right ${culprit.breedName}, but the hotdog isn't in the picture!`;
+          missReason = `that's the right ${culprit.breedName}, but the hotdog isn't in the picture!`;
           description = `${culprit.dogName} the ${culprit.breedName} running off with my hotdog`;
           continue;
         }
@@ -106,13 +106,13 @@ function isObjectInCamera(mvps, obstacles, view, sunMvp) {
   if (!missReason && !closestDog) {
     for (let obstacle of obstacles) {
       if (isInView(obstacle.mvp, centerOfObject)) {
-        missReason = `what am I supposed to do with this picture of ${obstacle.name}?`;
+        missReason = `what am I supposed to do with a picture of ${obstacle.name}?`;
         description = obstacle.name;
       }
     }
     if (isInView(sunMvp, centerOfObject)) {
       missReason = `MY EYES!!!!`;
-      description = 'The sun, a blinding light!';
+      description = 'A blinding light';
     }
   }
 

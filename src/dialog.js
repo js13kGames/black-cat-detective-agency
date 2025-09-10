@@ -6,7 +6,6 @@ function dialog(time) {
     instructions.classList.add('hidden');
     gameUI.classList.add('hidden');
     canvas2D.classList.remove('hidden');
-    canvas2D.classList.add('show');
     // timeout to account for css transition
     setTimeout(() => canvas2D.classList.remove('hide'), 100);
     if (dialogTransitionOffset === null) {
@@ -14,7 +13,10 @@ function dialog(time) {
     }
     dialogTransitionOffset -= 40;
     if (dialogTransitionOffset > 0) {
-      ctx2D.save(); ctx2D.translate(dialogTransitionOffset, 0); drawScene({ textArr: [] }); ctx2D.restore();
+      ctx2D.save();
+      ctx2D.translate(dialogTransitionOffset, 0);
+      drawScene({ textArr: [] });
+      ctx2D.restore();
     } else {
       if (gameOver) drawGameOver();
       else {
@@ -55,9 +57,11 @@ function dialog(time) {
     ctx2D.save();
     ctx2D.translate(transitionOffset, 0);
     drawScene({ time, textArr: [...arr1, ...arr2, ...arr3], offset: arr1.length + arr2.length - 1 });
-    if (reply) setButtons([
-      { text: 'let\'s find them!', onClick: renderNextScene(4), alignment: 'right' }
-    ]);
+    if (reply) {
+      setButtons([
+        { text: 'let\'s find them', onClick: renderNextScene(4), alignment: 'right' }
+      ]);
+    }
     ctx2D.restore();
   }
 }

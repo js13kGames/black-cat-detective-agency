@@ -85,7 +85,7 @@ function drawButton({ text, onClick, alignment, fontSize = 35 }) {
   ctx2D.fillText(text, x + width / 2, y + height / 2);
 
   // add a border
-  ctx2D.strokeStyle = convertColorToRgba(colors.lighterPurple);
+  ctx2D.strokeStyle = "rgba(201, 207, 247, 1)";
   ctx2D.lineWidth = 5;
   ctx2D.strokeRect(x, y, width, height);
 
@@ -102,9 +102,10 @@ function fillButton() {
     fillNum = 0;
     activeButton.onClick();
     activeButton = null;
+    // button fill sound
+    zzfx(...[,,537,.02,.02,.22,1,1.59,-6.98,4.97]);
     return;
   }
-  // requestAnimationFrame(fillButton);
 }
 
 
@@ -195,11 +196,16 @@ function cropAndDrawImg(img, targetWidth, targetHeight, x, y, hasBorder) {
 }
 
 const timeToAppear = 1500;
+let indexDrawn = 0;
 function drawScene({ time, textArr, offset, hasPicture }) {
   drawComputer();
   if (!hasPicture || dialogImgLoaded) {
     let timeElapsed = time - start;
     let currentIndex = Math.floor(timeElapsed / timeToAppear) >= textArr.length - 1 ? textArr.length - 1 : Math.floor(timeElapsed / timeToAppear) + offset;
+    if (indexDrawn === currentIndex) {
+      zzfx(...[1.6,,178,,.15,.16,1,4.6,,,,,,,,,,.63,,.14]); // text sound
+      indexDrawn = currentIndex + 1;
+    };
     drawSpeech(textArr.slice(0, currentIndex + 1));
   }
 }
@@ -225,8 +231,7 @@ function drawAlbum() {
   }
 
   // draw description a bit lower on the computer screen
-  const fontSize = 22;
-  ctx2D.font = `${fontSize}px monospace`;
+  ctx2D.font = `22px monospace`;
   ctx2D.textAlign = 'center';
   ctx2D.textBaseline = 'bottom';
   const textX = canvas2D.width / 2;
@@ -234,8 +239,7 @@ function drawAlbum() {
   ctx2D.fillStyle = 'white';
   ctx2D.fillText(entry.description, textX, textY);
   // disclaimer
-  const disclaimerFontSize = 12;
-  ctx2D.font = `italic ${disclaimerFontSize}px monospace`;
+  ctx2D.font = 'italic 12px monospace';
   const dTextX = canvas2D.width / 2;
   const dTextY = canvas2D.height - 70;
   ctx2D.fillStyle = 'white';
@@ -361,6 +365,7 @@ function drawMouse() {
   // check if the paw is colliding with the mouse
   if (mouseX > mousePosition.x - 50 && mouseX < mousePosition.x + 50 &&
     mouseY > mousePosition.y - 50 && mouseY < mousePosition.y + 50) {
+    zzfx(...[,.2,1e3,.02,,.01,2,,18,,475,.01,.01]) // mouse
     isCollidingWithMouse = true;
     swatCount++;
   }
@@ -429,7 +434,7 @@ function drawMouse() {
 function resize2D() {
   // reset dialog image state
   dialogImgFinished = false;
-  webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
+  webglUtils.resizeCanvasToDisplaySize(canvas2D);
   mousePosition = {
     x: 200,
     y: canvas2D.height - 200,
@@ -495,9 +500,9 @@ function setAlbumImage(blob) {
   albumImg.src = URL.createObjectURL(blob);
 }
 
-let arr1 = [{ text: 'Hello, is this the Black Cat Detective agency?' }, { text: 'I need help catching some unruly dogs in the act!' }];
-let arr2 = [{ text: 'ttghjikpp[[[[[[[llll;;;;;;;;;;;;;;,nb', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat.' }, { text: "are you up to the task?" }];
-let arr3 = [{ text: 'fffffff vbbnmm,,,,', side: 'right' }, { text: 'I will take that as a yes.', side: 'left' }];
+let arr1 = [{ text: 'Is this the Black Cat Detective agency?' }, { text: 'I need help catching some unruly dogs in the act!' }];
+let arr2 = [{ text: 'ttghjikpp[[[[[ll;;;;;;;;;;,nb', side: 'right' }, { text: 'thank you for confirming that i am talking to a cat.' }, { text: "are you up to the task?" }];
+let arr3 = [{ text: 'ffffff vbbnmm,,,,', side: 'right' }, { text: 'I\ll take that as a yes.', side: 'left' }];
 
 
 let gameOver = false;
@@ -509,8 +514,6 @@ function renderNextMission() {
       renderedButtons = [];
       return;
     }
-    // start transition from 2d to 3d
-    canvas2D.classList.remove('show');
 
     transitionOffset = 0;
     isStartingGame = true;
@@ -533,7 +536,7 @@ function safariFix() {
   canvas2D.style.visibility = 'hidden';
   if (gl && gl.finish) gl.finish();
   canvas2D.width = canvas2D.width;
-  webglUtils.resizeCanvasToDisplaySize(canvas2D, 1);
+  webglUtils.resizeCanvasToDisplaySize(canvas2D);
   canvas2D.style.visibility = 'visible';
 }
 
@@ -574,7 +577,6 @@ function render(time) {
       setTimeout(() => {
         gameUI.classList.remove('hide');
         gameUI.classList.remove('hidden');
-        gameUI.classList.add('show');
         if (!cameraMode) {
           textMessages.classList.remove('hidden');
           instructions.classList.remove('hidden');

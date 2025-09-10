@@ -36,6 +36,7 @@ let cameraMode = false;
 let zoomAmount = 0;
 addEventListener('keydown', e => {
   if (e.code === 'Space') {
+    cameraOnSound();
     if (!cameraMode) {
       cameraMode = true;
       cameraUI.classList.remove('hidden');
@@ -48,12 +49,20 @@ addEventListener('keydown', e => {
       instructions.classList.remove('hidden');
     }
   } else if ((e.key === 'c' || e.key === 'C') && cameraMode) {
+    cameraSound();
     shouldCaptureImage = true;
-  } else if (e.key === 'z' || e.key === 'Z') {
+  } 
+
+  if (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'x') {
+    // zoom sound
+    zzfx(...[,,150,.05,,.05,,1.3,,,,,,3]);
+  }
+  
+  if (e.key.toLowerCase() === 'z') {
     if (!cameraMode) return;
     // clamp zoomAmount
     zoomAmount = Math.max(-1, zoomAmount - 0.1);
-  } else if (e.key === 'x' || e.key === 'X') {
+  } else if (e.key.toLowerCase() === 'x') {
     if (!cameraMode) return;
     // clamp at starting point
     if (zoomAmount > -0.1) return
@@ -262,97 +271,6 @@ function updateDogStateFromCollision(obstacles, width, depth, dogState) {
   return dogState;
 }
 
-
-function updatePosition(dogState, time, badAction) {
-  // // debugging
-  // return;
-  // apply bad action effects
-  if (badAction === 'tailChase') {
-    dogState.direction += 5 * (Math.PI / 180);
-  }
-  if (badAction === 'speed') {
-    dogState.speed = 80;
-  }
-  // dog will only move up and down!
-  if (badAction === 'jump') {
-    const maxJump = 0.5;
-    // starting jump
-    if (dogState.velocity === null || dogState.pos[1] <= 0) {
-      dogState.velocity = 0.05;
-      dogState.pos[1] = 0.05;
-    }
-    dogState.pos[1] += dogState.velocity;
-    dogState.velocity -= 0.01;
-    if (dogState.pos[1] > maxJump) {
-      dogState.pos[1] = maxJump;
-    } else if (dogState.pos[1] <= 0) {
-      // no digging dogs
-      dogState.pos[1] = 0;
-    }
-  } else {
-    dogState.pos[1] = 0;
-    dogState.velocity = null;
-  }
-
-  const timeSinceStep = Math.max(0.001, time * 0.001 - dogState.timeWalking);
-  dogState.timeWalking += timeSinceStep;
-  const step = dogState.speed * timeSinceStep;
-  if (badAction !== 'jump') {
-    // update x position
-    dogState.pos[0] += Math.sin(dogState.direction) * step;
-    // update z position
-    dogState.pos[2] += Math.cos(dogState.direction) * step;
-  }
-
-  // if the dog has hit the bounds, then turn them around and make them go in another direction!
-  if (dogState.pos[0] < dogState.bounds.x[0] || dogState.pos[0] > dogState.bounds.x[1] ||
-    dogState.pos[2] < dogState.bounds.z[0] || dogState.pos[2] > dogState.bounds.z[1]) {
-    dogState.direction += 45 * (Math.PI / 180); // degrees in radians
-    // make sure the dog is nudged back in bounds so they don't spin and go cuhrazy TODO: make like tree
-    dogState.pos[0] = dogState.pos[0] < dogState.bounds.x[0] ? dogState.bounds.x[0] + 0.1 : dogState.pos[0]; // dog is out of bounds on the left
-    dogState.pos[0] = dogState.pos[0] > dogState.bounds.x[1] ? dogState.bounds.x[1] - 0.1 : dogState.pos[0]; // dog is out of bounds on the right
-    dogState.pos[2] = dogState.pos[2] < dogState.bounds.z[0] ? dogState.bounds.z[0] + 0.1 : dogState.pos[2]; // dog is out of bounds on the top
-    dogState.pos[2] = dogState.pos[2] > dogState.bounds.z[1] ? dogState.bounds.z[1] - 0.1 : dogState.pos[2]; // dog is out of bounds on the bottom
-  }
-
-
-  // check for collisions with other dogs by looping through state. 
-  // if they hit another dog, turn them around!
-  // TODO: maybe stop the other dog from moving until the dog is safely placed?
-  for (const colDog of allDogs) {
-    if (colDog.dogName === dogState.dogName) continue;
-    // creating a collision box for the dogs using the base torso scale! + tail!
-    const dogTailLengthA = dogState.scale * dogParts[1].scale[2];
-    const dogWidthA = dogState.scale * dogParts[0].scale[0];
-    const dogDepthA = dogState.scale * dogParts[0].scale[2] + dogTailLengthA;
-    const dogTailLengthB = colDog.scale * dogParts[1].scale[2];
-    const dogWidthB = colDog.scale * dogParts[0].scale[0];
-    const dogDepthB = colDog.scale * dogParts[0].scale[2] + dogTailLengthB;
-    const dx = Math.abs(dogState.pos[0] - colDog.pos[0]);
-    const dz = Math.abs(dogState.pos[2] - colDog.pos[2]);
-    let nudgeSize = 0.5;
-    if (dx < (dogWidthA + dogWidthB) / 2 && dz < (dogDepthA + dogDepthB) / 2) {
-
-      dogState.direction += 45 * (Math.PI / 180);
-      const minDistX = (dogWidthA + dogWidthB) / 2;
-      const minDistZ = (dogDepthA + dogDepthB) / 2;
-      // nudge dog outside the collision dog if they get stuck :\ 
-      if (dx < minDistX || colDog.badAction === 'speed') {
-        dogState.pos[0] = colDog.pos[0] + Math.sign(dogState.pos[0] - colDog.pos[0]) * (minDistX + nudgeSize);
-      }
-      if (dz < minDistZ || colDog.badAction === 'speed') {
-        dogState.pos[2] = colDog.pos[2] + Math.sign(dogState.pos[2] - colDog.pos[2]) * (minDistZ + nudgeSize);
-      }
-      break;
-    }
-  }
-
-  dogState = updateDogStateFromCollision(trees, 1, 1, dogState);
-  dogState = updateDogStateFromCollision(bushes, 1, 1, dogState);
-  dogState = updateDogStateFromCollision(benches, 2, 0.6, dogState);
-
-}
-
 // for the photo album at the end! :) 
 let allBlobs = [];
 let timeSceneStarted = 0;
@@ -517,7 +435,7 @@ function drawHotdog(world, view, pos) {
   },
   {
     world: mustardWorld,
-    color: colors.yellow
+    color: [1, 1, 0, 1]
   }], {
     view,
   });
@@ -547,12 +465,12 @@ const dogState = {
 
 const breeds = {
   german: { breedName: "German Shepherd", partColors: { snout: colors.tawny, earL: colors.tawny, earR: colors.tawny, tail: colors.tawny } },
-  westie: { breedName: "West Highland White Terrier", scale: 0.3, wholeColor: colors.white, modifications: { tail: 0.4 } },
+  westie: { breedName: "Westie", scale: 0.3, wholeColor: [1, 1, 1, 1], modifications: { tail: 0.4 } },
   lab: { breedName: "Labrador Retriever", scale: 0.45, floppy: true, wholeColor: [colors.lightTan, colors.tawny, colors.darkGray] },
   golden: { breedName: "Golden Retriever", scale: 0.42, floppy: true, wholeColor: colors.golden },
   chihuahua: { breedName: "Chihuahua", wholeColor: colors.lightBrown, scale: 0.15, modifications: { tail: 0.6 } },
-  chow: { breedName: "Chow Chow", wholeColor: colors.redBrown, scale: 0.4, partColors: { tongue: colors.blue }, modifications: { tail: 0.2 } },
-  jack: { breedName: "Jack Russell Terrier", wholeColor: colors.white, scale: 0.2, partColors: { body: colors.tawny, earL: colors.tawny, earR: colors.tawny, tail: colors.tawny, snout: colors.tawny }, modifications: { tail: 0.5 } },
+  chow: { breedName: "Chow", wholeColor: colors.redBrown, scale: 0.4, partColors: { tongue: colors.blue }, modifications: { tail: 0.2 } },
+  jack: { breedName: "Jack Russell", wholeColor: [1, 1, 1, 1], scale: 0.2, partColors: { body: colors.tawny, earL: colors.tawny, earR: colors.tawny, tail: colors.tawny, snout: colors.tawny }, modifications: { tail: 0.5 } },
   dachshund: { breedName: "Dachshund", wholeColor: [colors.darkGray, colors.redBrown], scale: 0.2, floppy: true, modifications: { torso: 1.5 } },
   pug: { breedName: "Pug", wholeColor: colors.lightBrown, scale: 0.2, partColors: { earL: colors.black, earR: colors.black, snout: colors.black }, modifications: { snout: 0.3, tail: 0.5 } }
 };
@@ -584,7 +502,7 @@ function generateDogs(numDogs, startIndex) {
   return dogs;
 }
 
-// honestly this is the perfect tree placement, i don't care!!! i'm hardcoding the trees.
+// i chose to hardcode the obstacle positions and I'm def okay with it
 const trees = [
   { "tX": 34.1, "tZ": -3.5 },
   { "tX": 21.8, "tZ": 8.2 },
@@ -631,7 +549,8 @@ let photoDialog = '';
 let caughtDogBlob = null;
 
 /* game logic! */
-const allDogNames = ['Fig', 'Sriracha', 'Bagel', 'Barkus', "Sneeze", "Bopsy", "Plankley", 'Fizaac', 'Gwen', 'Soren', 'Ivan', 'Ugly Baby', 'Thermy', 'Dog Kevin', 'Taylina', 'Gwillex', 'Whivy', 'Matthew', "Milky", 'Boomer', 'Tallulah', 'Cholula', 'Flopina', 'Goopy', 'Sugar Pop', 'Waffles', "Wilsen", "Rufuss", "Sargent", "Floss", "Deemo", "Cecil", "Norman", "Miss Beautiful", "Fiona", "Watson", "Beau", "Moop", "Nes", "Maple", "Finnegan", "Zilly", "Panini", "Anne", "Colleen", "Aristotle", "Fish", "Eleanor", "Beth", "Gingerbread", "Weasel", "Pickles", "Avril", "Chaise", "Cameo", "Darby", "Garry", "Mona", "Pascal", "Shirley", "Tony", "Thisbe", "Spaghetti", "Tosha", "Sonny", "Nancy", "Ocean", "Hazelnut", "Shelby", "Jocinda", "Meadow", "Clark", "Claire", "Bambina", "McCleskey"].slice().sort(() => Math.random() - 0.5);
+// max dog amount will be 25 so I pared down my list:
+const allDogNames = 'Fig,Sriracha,Bagel,Barkus,Bopsy,Plankley,Fizaac,Gwen,Soren,Ivan,Ugly Baby,Thermy,Dog Kevin,Taylina,Gwillex,Whivy,Boomer,Tallulah,Cholula,Flopina,Goopy,Sugar Pop,Waffles,Floss,Norman,Miss Beautiful,Fiona,Watson,Beau,Moop,Maple,Panini,Colleen,Aristotle,Fish,Eleanor,Beth,Gingerbread,Pickles,Avril,Garry,Mona,Pascal,Shirley,Tony,Thisbe,Spaghetti,Sonny,Ocean,Hazelnut,Jocinda,Meadow,Clark,Bambina,McCleskey'.split(',').slice().sort(() => Math.random() - 0.5);
 let missionIndex = 0;
 const redHerringActions = ['tailChase', 'speed', 'jump']
 const missions = [
@@ -646,11 +565,10 @@ const missions = [
   {
     badAction: 'tailChase',
     otherDogCount: 6,
-    text: 'Find the dog who is chasing its own tail. It is very distracting!',
+    text: 'Find the dog who is chasing its own tail. It\'s very distracting!',
     redHerringCount: 0,
   },
   {
-    targetBreed: null,
     badAction: 'speed',
     otherDogCount: 10,
     text: 'Find the dog running at full speed. It\'s making me nervous!',
@@ -660,11 +578,10 @@ const missions = [
     targetBreed: ['golden', 'german', 'lab', 'chow', 'pug', 'westie', 'chihuahua', 'jack'],
     badAction: 'hotdog',
     otherDogCount: 20,
-    text: 'Find the dog who STOLE my hot dog. And sure you get their face!',
+    text: 'Find the dog who STOLE my hotdog. Make sure to get their face!',
     redHerringCount: 3,
   },
   {
-    targetBreed: null,    
     badAction: 'jump',
     otherDogCount: 25,
     text: 'Find the dog who is jumping every so often. I\'m afraid they\'ll take off flying!',
@@ -700,7 +617,6 @@ function render3D(time = 0) {
   if (cameraMode) {
     // reset FOV
     fieldOfViewInRadians = 60 * Math.PI / 180;
-    // TODO: just use FOV and now zoomAmount
     if (zoomAmount === 0) {
       // start slightly zoomed in
       zoomAmount = -0.1;
@@ -724,7 +640,7 @@ function render3D(time = 0) {
     sX: 4,
     sY: 4,
     sZ: 4,
-    color: colors.yellow
+    color: [1, 1, 0, 1]
   });
 
   let prevMission = missions[missionIndex - 1];

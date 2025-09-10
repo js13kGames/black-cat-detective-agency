@@ -18,6 +18,7 @@ function takePicture(capturedDog, missReason, description) {
       gameUI.classList.add('hidden');
       setDialogImage(blob)
       document.exitPointerLock();
+      indexDrawn = 0;
       gameState = 5;
       photoDialog = `you caught the culprit: ${capturedDog.dogName} the ${capturedDog.breedName}!`;
       dialogOpen = true;

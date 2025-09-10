@@ -69,3 +69,61 @@ function drawDog(view, dogState, badAction, isBadDog) {
   }
   return mvp;
 }
+
+
+function updatePosition(dogState, time, badAction) {
+  // apply bad action effects
+  if (badAction === 'tailChase') dogState.direction += 0.0873;
+
+  if (badAction === 'speed') dogState.speed = 80;
+
+  if (badAction === 'jump') {
+    if (dogState.velocity == null || dogState.pos[1] <= 0) {
+      dogState.velocity = dogState.pos[1] = 0.05;
+    }
+    dogState.pos[1] += dogState.velocity;
+    dogState.velocity -= 0.01;
+    dogState.pos[1] = dogState.pos[1] > 0.5 ? 0.5 : dogState.pos[1] <= 0 ? 0 : dogState.pos[1];
+  } else {
+    dogState.pos[1] = 0;
+    dogState.velocity = null;
+  }
+
+  let t = Math.max(0.001, time * 0.001 - dogState.timeWalking);
+  dogState.timeWalking += t;
+  let s = dogState.speed * t;
+  if (badAction !== 'jump') {
+    dogState.pos[0] += Math.sin(dogState.direction) * s;
+    dogState.pos[2] += Math.cos(dogState.direction) * s;
+  }
+
+  // if the dog has hit the bounds, then turn them around and make them go in another direction!
+  let bx = dogState.bounds.x, bz = dogState.bounds.z, p = dogState.pos;
+  if (p[0] < bx[0] || p[0] > bx[1] || p[2] < bz[0] || p[2] > bz[1]) {
+    dogState.direction += 0.7854;
+    // nudge the dog back in bounds
+    p[0] = p[0] < bx[0] ? bx[0] + 0.1 : p[0] > bx[1] ? bx[1] - 0.1 : p[0];
+    p[2] = p[2] < bz[0] ? bz[0] + 0.1 : p[2] > bz[1] ? bz[1] - 0.1 : p[2];
+  }
+
+  // check dogs for collisions with each other
+  for (const d of allDogs) {
+    if (d.dogName === dogState.dogName) continue;
+    let ta = dogState.scale * dogParts[1].scale[2], wa = dogState.scale * dogParts[0].scale[0], da = dogState.scale * dogParts[0].scale[2] + ta;
+    let tb = d.scale * dogParts[1].scale[2], wb = d.scale * dogParts[0].scale[0], db = d.scale * dogParts[0].scale[2] + tb;
+    let dx = Math.abs(p[0] - d.pos[0]), dz = Math.abs(p[2] - d.pos[2]), n = 0.5;
+    if (dx < (wa + wb) / 2 && dz < (da + db) / 2) {
+      dogState.direction += 0.7854;
+      let mx = (wa + wb) / 2, mz = (da + db) / 2;
+      // nudge the dog out of collision!
+      if (dx < mx || d.badAction === 'speed') p[0] = d.pos[0] + Math.sign(p[0] - d.pos[0]) * (mx + n);
+      if (dz < mz || d.badAction === 'speed') p[2] = d.pos[2] + Math.sign(p[2] - d.pos[2]) * (mz + n);
+      break;
+    }
+  }
+
+  // check for obstacle collisions
+  dogState = updateDogStateFromCollision(trees, 1, 1, dogState);
+  dogState = updateDogStateFromCollision(bushes, 1, 1, dogState);
+  dogState = updateDogStateFromCollision(benches, 2, 0.6, dogState);
+}
